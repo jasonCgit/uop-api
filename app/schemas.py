@@ -154,3 +154,39 @@ class RoleCreate(BaseModel):
 
 class RoleRename(BaseModel):
     name: str
+
+
+class SituationCreate(BaseModel):
+    incident_number: str
+    title: str
+    incident_zoom: str = ""
+    wm_ait_zoom: str = ""
+    incident_lead: str = ""
+    opened_time: str = ""
+    state: str = "Active"
+    priority: str = "P1"
+    teams_channels: list[str] = []
+    time_period_days: int = 7
+    escalation_notes: str = ""
+
+
+class SituationUpdate(BaseModel):
+    title: Optional[str] = None
+    incident_number: Optional[str] = None
+    incident_zoom: Optional[str] = None
+    wm_ait_zoom: Optional[str] = None
+    incident_lead: Optional[str] = None
+    opened_time: Optional[str] = None
+    state: Optional[str] = None
+    priority: Optional[str] = None
+    teams_channels: Optional[list[str]] = None
+    time_period_days: Optional[int] = None
+    escalation_notes: Optional[str] = None
+    system_overrides: Optional[dict] = None
+
+
+class SystemOverrideUpdate(BaseModel):
+    timeline: Optional[str] = None
+    impacted_capabilities: Optional[list[str]] = None
+    sre_lead_overrides: Optional[list[str]] = None
+    next_update: Optional[str] = None

@@ -15,6 +15,9 @@ from app.routers import (
     contact,
     aura,
     directory,
+    outcome_measures,
+    essential_services,
+    situation_room,
 )
 from app.services.vc_monitor import start_vc_notification_loop
 
@@ -41,6 +44,9 @@ app.include_router(vc_notifications.router)
 app.include_router(contact.router)
 app.include_router(aura.router)
 app.include_router(directory.router)
+app.include_router(outcome_measures.router)
+app.include_router(essential_services.router)
+app.include_router(situation_room.router)
 
 
 @app.on_event("startup")

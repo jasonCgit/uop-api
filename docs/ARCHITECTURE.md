@@ -40,6 +40,8 @@ The platform consists of two repositories: **uop-api** (FastAPI backend) and **u
 - **SLO Agent**: Autonomous agent that predicts SLO breaches, tracks error budgets, and proposes remediation before incidents happen
 - **Announcements**: Create, manage, and broadcast platform announcements — with search, filters, pinning, and live auto-refresh
 - **Teams Management**: Full CRUD team management with role-based member assignments, corporate directory search, and multi-team application associations
+- **Outcome Measures**: SRE outcome metrics across 5 sections — Usage & Adoption, Workstream Outcomes, SRE Effectiveness, Traditional Support, and Baselines & Coverage — with 12-month trend charts, baseline comparisons, and CTO/CBT leaderboards
+- **Essential Services**: 15 business-critical service health monitoring — risk matrix heatmap, business process impact chains, ReactFlow dependency visualization, and CTO/CBT coverage analysis
 
 ---
 
@@ -67,7 +69,7 @@ The platform is split across two repositories:
 │  uop-api  (FastAPI + Uvicorn)                       │
 │  ┌──────────────┐  ┌─────────────────────────────┐  │
 │  │   Routers    │  │       Mock Data              │  │
-│  │ (9 modules)  │  │  apps_registry, graph_data,  │  │
+│  │ (11 modules) │  │  apps_registry, graph_data,  │  │
 │  └──────┬───────┘  │  teams_data, directory_data  │  │
 │         │          └──────────────┬───────────────┘  │
 │         ▼                        ▼                   │
@@ -331,6 +333,114 @@ Deployments can be:
 
 ---
 
+## 5b. Essential Services
+
+### 5b.1 Essential Service Model
+
+Essential Services (ES) are business-critical processes that map to multiple applications at the deployment level. Each ES has a criticality level and derives its RAG status from mapped applications.
+
+```
+Essential Service (e.g., "Trade Execution")
+ ├─ Mapped Application (SEAL: 35206 → Spectrum Trading)
+ │   ├─ Deployment: GAP
+ │   └─ Deployment: GKP
+ ├─ Mapped Application (SEAL: 87082 → Center Trading)
+ │   ├─ Deployment: GAP
+ │   └─ Deployment: GKP
+ └─ Mapped Application (SEAL: 81884 → Order Decision Engine)
+     ├─ Deployment: GAP
+     ├─ Deployment: GKP
+     └─ Deployment: ECS
+```
+
+### 5b.2 The 15 Essential Services
+
+| ID     | Name                                                                             | Criticality | Mapped Apps |
+|--------|----------------------------------------------------------------------------------|-------------|-------------|
+| 3213   | Administer Sweep Functionality                                                   | High        | 5-8         |
+| 3208   | Calculate and distribute Net Asset Values (NAVs) (AM)                            | Critical    | 5-7         |
+| 3198   | Collateral management & monitoring (WM)                                          | Medium      | 5-8         |
+| 240292 | Collateral management & monitoring (AM)                                          | Medium      | 5-6         |
+| 3197   | Conduct Ongoing Due Diligence                                                    | Medium      | 5-7         |
+| 3199   | Essential Client Requests & Actions                                              | High        | 5-7         |
+| 3210   | Facilitate closing of committed mortgage loans                                   | High        | 5-6         |
+| 3211   | Facilitate Purchase & Sell Orders in Brokerage                                   | Critical    | 5-6         |
+| 3212   | Liquidate and distribute assets in investment portfolios and deposit accounts    | Critical    | 5-7         |
+| 3209   | Maintain shareholder account info and facilitate shareholder transactions (AM)    | High        | 5-7         |
+| 3196   | Maintain shareholder account info and facilitate shareholder transactions (WM)    | Medium      | 5-7         |
+| 3202   | Manage US Money Market Mutual Funds                                              | Critical    | 5-7         |
+| 3214   | Provide Access to Funds from Existing Credit Facilities                          | Critical    | 5-6         |
+| 3203   | Provide portfolio/discretionary investment management (AM)                       | High        | 5-8         |
+| 3204   | Provide portfolio/discretionary investment management (WM)                       | High        | 5-8         |
+
+### 5b.3 ES Status Propagation
+
+```
+ES Status = worst status among all mapped applications
+           = worst(app1.status, app2.status, ..., appN.status)
+```
+
+Status flows bottom-up through the existing hierarchy (Indicator → Component → Deployment → Application) and is then aggregated at the ES level.
+
+### 5b.4 Business Processes
+
+12 business processes link to 2-5 Essential Services each. Process status = worst status among linked ES.
+
+```
+Business Process: "Brokerage Trade Lifecycle"
+ ├─ Facilitate Purchase & Sell Orders in Brokerage (ES 3211) → healthy
+ ├─ Liquidate and distribute assets (ES 3212) → degraded
+ └─ Administer Sweep Functionality (ES 3213)  → healthy
+ → Process Status = degraded (worst of all linked ES)
+```
+
+### 5b.5 Tree Mapping
+
+Essential Services map to both organizational trees:
+- **Business Tree**: LOB → Sub-LOB → Product Line → ES (via mapped apps)
+- **Technology Tree**: LOB → CTO → CBT → ES (via mapped apps)
+
+This allows leaders to see which parts of the organization are impacted by ES health changes.
+
+---
+
+## 5c. Outcome Measures
+
+The Outcome Measures page tracks SRE operational metrics across 5 sections:
+
+1. **Usage & Adoption** — Prompt volume, click-through rate, feature adoption
+2. **Workstream Outcomes** — 8 SRE workstreams with adoption/maturity/value scores
+3. **SRE Effectiveness** — MTTR, P1 reduction, proactive prevention
+4. **Traditional Support Impact** — Ticket volume, noise reduction, escalation rates
+5. **Baselines & Coverage** — Coverage gauges and CTO/CBT heatmap
+
+Each section includes: KPI cards (current vs baseline), 12-month trend charts with baseline reference lines, and CTO/CBT leaderboard rankings. All metrics are deterministic per-SEAL using `hashlib.md5(seal)` for reproducible mock data.
+
+## 5d. Situation Room
+
+The Situation Room provides major incident management with system-level health tracking.
+
+### Key Concepts
+
+- **Situations**: Active major incidents (P1/P2) with timeline tracking, state management, and priority
+- **Systems**: Logical groupings of applications by SEAL (e.g., "Trading Platform" = 3 trading apps). Each system has computed health status from its member apps
+- **System Overrides**: Per-situation, per-system overrides for timeline stage, impacted capabilities, SRE lead assignments, and next update interval
+- **Situation Reports**: Deep-dive export data with full system/app details, timeline events, and CTO/CBT coverage
+
+### Data Model
+
+```
+Situation → has many Systems (via SYSTEM definitions)
+System → has many SEALs → enriched apps with health status
+Situation × System → SystemOverride (timeline, capabilities, SRE leads)
+```
+
+### Mock Data
+
+- `situation_room_data.py`: SYSTEMS (logical app groupings), SITUATIONS (active incidents), dropdown options, `compute_system_rows()` for live health, `build_situation_report()` for export
+
+---
+
 ## 6. External System Integration Requirements
 
 ### 6.1 Product Catalog API (PATOOLS)
@@ -505,6 +615,9 @@ The internal chat endpoint (`POST /api/aura/chat`) already uses SSE streaming �
 | SLO Agent | `/slo-agent` | Mock data (static) | No |
 | Teams | `/teams` | `/api/teams`, `/api/teams/roles`, `/api/directory/search` | No |
 | Announcements | `/announcements` | `/api/announcements` | No |
+| Essential Services | `/essential-services` | `/api/essential-services/*` | Yes — all endpoints filtered |
+| Outcome Measures | `/outcome-measures` | `/api/outcome-measures/*` | Yes — all endpoints filtered |
+| Situation Room | `/situation-room` | `/api/situation-room/*` | No — operates on system-level groupings |
 | Favorites | `/favorites` | localStorage | No |
 | View Central (listing) | `/view-central` | localStorage | No |
 | View Central (dashboard) | `/view-central/:id` | localStorage + widget API calls | Yes — ScopeBar + view filters |
@@ -638,7 +751,9 @@ uop-api/                          # FastAPI backend
 │   │   ├── announcements.py      # Announcement CRUD, notifications
 │   │   ├── vc_notifications.py   # View Central notification subscriptions
 │   │   ├── contact.py            # Send Teams/email notifications
-│   │   └── aura.py               # AURA AI chat (SSE streaming)
+│   │   ├── aura.py               # AURA AI chat (SSE streaming)
+│   │   ├── outcome_measures.py   # Outcome measures (summary, sections, leaderboard, coverage)
+│   │   └── essential_services.py # Essential services (summary, detail, processes, impact graph)
 │   ├── services/                 # Business logic
 │   │   ├── enrichment.py         # App enrichment pipeline (status propagation, SLO)
 │   │   ├── graph_engine.py       # Graph traversal (BFS, blast radius)
@@ -652,7 +767,9 @@ uop-api/                          # FastAPI backend
 │       ├── teams_data.py         # 48 teams with role-based members
 │       ├── directory_data.py     # 200 corporate directory entries
 │       ├── announcements_data.py # Sample announcements
-│       └── aura_data.py          # AURA chat scenario responses
+│       ├── aura_data.py          # AURA chat scenario responses
+│       ├── outcome_measures_data.py # Outcome measures mock metrics (12-month series)
+│       └── essential_services_data.py # 15 ES definitions, app mappings, business processes
 ├── docs/                         # API specifications and architecture
 ├── manifest.yml                  # Cloud Foundry deployment (python_buildpack)
 ├── requirements.txt              # Python dependencies
