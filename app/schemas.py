@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional
 
 
 class AnnouncementCreate(BaseModel):
@@ -67,24 +67,37 @@ class AnnouncementUpdate(BaseModel):
     connect_weave_interfaces: Optional[list[int]] = None
 
 
+class TeamMember(BaseModel):
+    sid: str
+    firstName: str
+    lastName: str
+    email: str
+    role: str
+
+
 class TeamCreate(BaseModel):
     name: str
     emails: list[str] = []
     teams_channels: list[str] = []
+    members: list[TeamMember] = []
 
 
 class TeamUpdate(BaseModel):
     name: Optional[str] = None
     emails: Optional[list[str]] = None
     teams_channels: Optional[list[str]] = None
+    members: Optional[list[TeamMember]] = None
 
 
 class VCNotificationCreate(BaseModel):
     name: str
     alert_types: list[str] = ["critical"]
-    channels: dict = {"teams": False, "email": False}
+    channels: dict = {"teams": False, "email": False, "teamRoles": False}
     teams_channels: list[str] = []
     email_recipients: list[str] = []
+    team_roles: list[str] = []
+    role_mode: str = "all"  # "all" = auto-include all members with role, "pick" = individual selection
+    role_members: list[str] = []  # SIDs of individually picked members (when role_mode="pick")
     frequency: str = "realtime"
     days_of_week: list[str] = []
     start_time: str = "08:00"
@@ -99,6 +112,9 @@ class VCNotificationUpdate(BaseModel):
     channels: Optional[dict] = None
     teams_channels: Optional[list[str]] = None
     email_recipients: Optional[list[str]] = None
+    team_roles: Optional[list[str]] = None
+    role_mode: Optional[str] = None
+    role_members: Optional[list[str]] = None
     frequency: Optional[str] = None
     days_of_week: Optional[list[str]] = None
     start_time: Optional[str] = None
@@ -130,3 +146,11 @@ class IndicatorExclusion(BaseModel):
 
 class AppTeamAssignment(BaseModel):
     team_ids: list[int]
+
+
+class RoleCreate(BaseModel):
+    name: str
+
+
+class RoleRename(BaseModel):
+    name: str

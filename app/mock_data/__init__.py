@@ -41,8 +41,11 @@ from .announcements_data import (
     _next_announcement_id,
 )
 
+from .directory_data import DIRECTORY
+
 from .teams_data import (
     TEAMS,
+    MEMBER_ROLES,
 )
 
 from .aura_data import (
@@ -91,8 +94,11 @@ __all__ = [
     "WEAVE_INTERFACES",
     "ANNOUNCEMENTS",
     "_next_announcement_id",
+    # directory_data
+    "DIRECTORY",
     # teams_data
     "TEAMS",
+    "MEMBER_ROLES",
     # aura_data
     "_aura_incident_analysis",
     "_aura_slo_report",

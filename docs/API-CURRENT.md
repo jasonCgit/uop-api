@@ -1,6 +1,6 @@
 # Current API Reference
 
-All endpoints are served by the FastAPI backend (`backend/main.py`).
+All endpoints are served by the FastAPI backend (`uop-api/app/main.py`).
 Base URL: `http://localhost:8080` (dev) or deployed host.
 
 > **Mock Data**: All endpoints currently return deterministic mock data from in-memory Python data structures. No external services are called. See the [Mock Data](#mock-data-implementation) section at the end for details on how each endpoint generates its data and what to replace for live integration.
@@ -343,19 +343,77 @@ Complete multi-layer graph for a specific application SEAL. Returns five layers:
 ## Team Management Endpoints
 
 ### GET /api/teams
-Returns all teams. Response: `[{ "id": 1, "name": "Client Data", "emails": [], "teams_channels": [] }]`
+Returns all teams with members.
+
+**Response**:
+```json
+[
+  {
+    "id": 1,
+    "name": "Client Data",
+    "emails": ["client-data@jpmchase.com", "client-data-oncall@jpmchase.com"],
+    "teams_channels": ["#client-data-alerts", "#client-data-general"],
+    "members": [
+      { "sid": "A10042", "firstName": "John", "lastName": "Doe", "email": "john.doe@jpmchase.com", "role": "SRE" }
+    ]
+  }
+]
+```
+
+### GET /api/teams/roles
+Returns the list of available team member roles.
+
+**Response**: `["SRE", "App Owner", "Dev Lead", "Engineering Manager", "Product Owner", "QA Lead", "Platform Engineer", "Scrum Master"]`
 
 ### GET /api/teams/{team_id}
-Returns a single team.
+Returns a single team (same schema as above).
+
+### GET /api/teams/{team_id}/members
+Returns members of a team. Supports optional `?role=` query param to filter by role.
+
+**Query Params**: `role` (optional) — filter members by role name (e.g., `?role=SRE`)
+
+**Response**:
+```json
+[
+  { "sid": "A10042", "firstName": "John", "lastName": "Doe", "email": "john.doe@jpmchase.com", "role": "SRE" }
+]
+```
 
 ### POST /api/teams
-Create a team. Request: `{ "name": "New Team", "emails": [], "teams_channels": [] }`
+Create a team. Request:
+```json
+{
+  "name": "New Team",
+  "emails": ["team@jpmchase.com"],
+  "teams_channels": ["#new-team-alerts"],
+  "members": [
+    { "sid": "A10042", "firstName": "John", "lastName": "Doe", "email": "john.doe@jpmchase.com", "role": "SRE" }
+  ]
+}
+```
 
 ### PUT /api/teams/{team_id}
-Update a team. All fields optional.
+Update a team. All fields optional (including `members`).
 
 ### DELETE /api/teams/{team_id}
 Delete a team. Response: `{ "ok": true }`
+
+---
+
+## Directory Endpoints
+
+### GET /api/directory/search
+Search the corporate directory by name, SID, or email.
+
+**Query Params**: `q` (required) — search query (case-insensitive substring match)
+
+**Response** (top 20 matches):
+```json
+[
+  { "sid": "A10042", "firstName": "John", "lastName": "Doe", "email": "john.doe@jpmchase.com", "department": "Technology", "title": "Senior Engineer" }
+]
+```
 
 ---
 
@@ -446,18 +504,20 @@ Every endpoint above currently returns **deterministic mock data**. This section
 
 | Source | File | Description |
 |---|---|---|
-| `APPS_REGISTRY` | `backend/apps_registry.py` | 81 applications with business metadata + operational fields (incidents, region) |
-| `NODES` | `backend/main.py` line ~243 | 90+ component service nodes with id, label, status, team, sla, incidents_30d |
-| `EDGES_RAW` | `backend/main.py` line ~450 | 100+ component dependency edges (source, target) tuples |
-| `SEAL_COMPONENTS` | `backend/main.py` line ~671 | Mapping: SEAL ID → component IDs (10 SEALs) |
-| `INDICATOR_NODES` | `backend/main.py` line ~869 | 869 health indicators with type, health status, parent component |
-| `PLATFORM_NODES` | `backend/main.py` line ~727 | 10 platform infrastructure nodes (GAP, GKP, ECS, EKS) |
-| `DATA_CENTER_NODES` | `backend/main.py` line ~850 | 6 data center nodes (NA, EMEA, APAC) |
-| `COMPONENT_PLATFORM_EDGES` | `backend/main.py` line ~747 | Component → Platform hosting mappings |
-| `DEPLOYMENT_OVERRIDES` | `backend/main.py` line ~1496 | Custom deployment definitions for 3 apps |
-| `APP_SLO_DATA` | `backend/main.py` | SLO targets/actuals for 26 apps (others use 99.0% default) |
-| `INCIDENT_TRENDS` | `backend/main.py` | 13-week hardcoded P1/P2 trend data |
-| `_AURA_SCENARIOS` | `backend/main.py` line ~2848 | Keyword → response handler mapping for 11 chat scenarios |
+| `APPS_REGISTRY` | `app/mock_data/apps_registry.py` | 81 applications with business metadata + operational fields (incidents, region) |
+| `NODES` | `app/mock_data/graph_data.py` | 90+ component service nodes with id, label, status, team, sla, incidents_30d |
+| `EDGES_RAW` | `app/mock_data/graph_data.py` | 100+ component dependency edges (source, target) tuples |
+| `SEAL_COMPONENTS` | `app/mock_data/graph_data.py` | Mapping: SEAL ID → component IDs (10 SEALs) |
+| `INDICATOR_NODES` | `app/mock_data/graph_data.py` | 869 health indicators with type, health status, parent component |
+| `PLATFORM_NODES` | `app/mock_data/graph_data.py` | 10 platform infrastructure nodes (GAP, GKP, ECS, EKS) |
+| `DATA_CENTER_NODES` | `app/mock_data/graph_data.py` | 6 data center nodes (NA, EMEA, APAC) |
+| `COMPONENT_PLATFORM_EDGES` | `app/mock_data/graph_data.py` | Component → Platform hosting mappings |
+| `DEPLOYMENT_OVERRIDES` | `app/mock_data/graph_data.py` | Custom deployment definitions for 3 apps |
+| `APP_SLO_DATA` | `app/mock_data/slo_data.py` | SLO targets/actuals for 26 apps (others use 99.0% default) |
+| `INCIDENT_TRENDS` | `app/mock_data/dashboard_data.py` | 13-week hardcoded P1/P2 trend data |
+| `_AURA_SCENARIOS` | `app/mock_data/aura_data.py` | Keyword → response handler mapping for 11 chat scenarios |
+| `TEAMS` | `app/mock_data/teams_data.py` | 48 teams with role-based members |
+| `DIRECTORY_ENTRIES` | `app/mock_data/directory_data.py` | 200 corporate directory entries |
 
 ### How Each Endpoint Uses Mock Data
 
@@ -474,7 +534,10 @@ Every endpoint above currently returns **deterministic mock data**. This section
 | `/api/applications/enriched` | Full enrichment pipeline: `APPS_REGISTRY` → `SEAL_COMPONENTS` → status propagation | Product Catalog + ERMA/V12 + Dynatrace + ServiceNow |
 | `/api/graph/*` | `NODES`, `EDGES_RAW`, `INDICATOR_NODES`, `PLATFORM_NODES` | ERMA/V12 Knowledge Graph + Dynatrace |
 | `/api/aura/chat` | Keyword matching → hardcoded scenario responses | AURA AI streaming API |
-| `/api/teams` | In-memory array of 55 pre-seeded teams | Teams/directory service |
+| `/api/teams` | In-memory array of 48 teams with members from directory | Teams/directory service |
+| `/api/teams/roles` | Static `MEMBER_ROLES` list (8 roles) | Role management service |
+| `/api/teams/{id}/members` | Members from team data, filterable by role | Teams/directory service |
+| `/api/directory/search` | 200 mock directory entries searched by name/SID/email | Corporate directory service |
 | `/api/announcements` | In-memory array of 4 announcements | Persistent database |
 | `/api/contact/send` | Returns mock "sent" response | Teams webhook + SMTP gateway |
 

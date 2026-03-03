@@ -1085,13 +1085,13 @@ Complete multi-layer graph for a specific application SEAL. Returns four layers:
 
 ## 5. Team Management Endpoints
 
-### GET /api/teams
+### 5.1 GET /api/teams
 
 | | |
 |---|---|
 | **Method** | `GET` |
 | **URL** | `/api/teams` |
-| **Purpose** | List all teams |
+| **Purpose** | List all teams with members |
 | **Status Codes** | `200 OK` |
 
 ```
@@ -1100,22 +1100,56 @@ Complete multi-layer graph for a specific application SEAL. Returns four layers:
     "id": 1,
     "name": "Client Data",
     "emails": ["client-data@jpmchase.com", "client-data-oncall@jpmchase.com"],
-    "teams_channels": ["#client-data-alerts", "#client-data-general"]
+    "teams_channels": ["#client-data-alerts", "#client-data-general"],
+    "members": [
+      { "sid": "A10042", "firstName": "John", "lastName": "Doe", "email": "john.doe@jpmchase.com", "role": "SRE" }
+    ]
   }
 ]
 
 ```
 
-### GET /api/teams/{team_id}
+### 5.2 GET /api/teams/roles
+
+| | |
+|---|---|
+| **Method** | `GET` |
+| **URL** | `/api/teams/roles` |
+| **Purpose** | List available team member roles |
+| **Status Codes** | `200 OK` |
+
+```
+["SRE", "App Owner", "Dev Lead", "Engineering Manager", "Product Owner", "QA Lead", "Platform Engineer", "Scrum Master"]
+
+```
+
+### 5.3 GET /api/teams/{team_id}
 
 | | |
 |---|---|
 | **Method** | `GET` |
 | **URL** | `/api/teams/{team_id}` |
-| **Purpose** | Get single team |
+| **Purpose** | Get single team (same schema as list) |
 | **Status Codes** | `200 OK`, `404 Not Found` |
 
-### POST /api/teams
+### 5.4 GET /api/teams/{team_id}/members
+
+| | |
+|---|---|
+| **Method** | `GET` |
+| **URL** | `/api/teams/{team_id}/members` |
+| **Query Params** | `role` (optional) — filter by role name (e.g., `?role=SRE`) |
+| **Purpose** | Get team members, optionally filtered by role |
+| **Status Codes** | `200 OK`, `404 Not Found` |
+
+```
+[
+  { "sid": "A10042", "firstName": "John", "lastName": "Doe", "email": "john.doe@jpmchase.com", "role": "SRE" }
+]
+
+```
+
+### 5.5 POST /api/teams
 
 | | |
 |---|---|
@@ -1130,21 +1164,24 @@ Complete multi-layer graph for a specific application SEAL. Returns four layers:
 {
   "name": "New Team",
   "emails": ["team@jpmchase.com"],
-  "teams_channels": ["#new-team-alerts"]
+  "teams_channels": ["#new-team-alerts"],
+  "members": [
+    { "sid": "A10042", "firstName": "John", "lastName": "Doe", "email": "john.doe@jpmchase.com", "role": "SRE" }
+  ]
 }
 
 ```
 
-### PUT /api/teams/{team_id}
+### 5.6 PUT /api/teams/{team_id}
 
 | | |
 |---|---|
 | **Method** | `PUT` |
 | **URL** | `/api/teams/{team_id}` |
-| **Purpose** | Update a team (all fields optional) |
+| **Purpose** | Update a team (all fields optional, including `members`) |
 | **Status Codes** | `200 OK`, `404 Not Found` |
 
-### DELETE /api/teams/{team_id}
+### 5.7 DELETE /api/teams/{team_id}
 
 | | |
 |---|---|
@@ -1162,6 +1199,40 @@ Complete multi-layer graph for a specific application SEAL. Returns four layers:
 | `name` | string | Team display name |
 | `emails` | string[] | Contact email addresses |
 | `teams_channels` | string[] | MS Teams channel names |
+| `members` | TeamMember[] | Team members with roles |
+
+**TeamMember Schema**:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `sid` | string | Unique person identifier |
+| `firstName` | string | First name |
+| `lastName` | string | Last name |
+| `email` | string | Email address |
+| `role` | string | Team role (SRE, App Owner, Dev Lead, etc.) |
+
+---
+
+## 5.5 Directory Endpoints
+
+### GET /api/directory/search
+
+| | |
+|---|---|
+| **Method** | `GET` |
+| **URL** | `/api/directory/search` |
+| **Query Params** | `q` (required) — search query (case-insensitive substring) |
+| **Purpose** | Search corporate directory by name, SID, or email |
+| **Status Codes** | `200 OK` |
+
+Returns top 20 matches:
+
+```
+[
+  { "sid": "A10042", "firstName": "John", "lastName": "Doe", "email": "john.doe@jpmchase.com", "department": "Technology", "title": "Senior Engineer" }
+]
+
+```
 
 ---
 
@@ -1350,9 +1421,12 @@ Complete multi-layer graph for a specific application SEAL. Returns four layers:
 {
   "name": "Critical App Alert",
   "alert_types": ["critical", "warning"],
-  "channels": { "teams": false, "email": true },
+  "channels": { "teams": false, "email": true, "teamRoles": false },
   "teams_channels": [],
   "email_recipients": ["ops@jpmchase.com"],
+  "team_roles": [],
+  "role_mode": "all",
+  "role_members": [],
   "frequency": "realtime",
   "days_of_week": ["Mon", "Tue", "Wed", "Thu", "Fri"],
   "start_time": "08:00",
@@ -1371,9 +1445,12 @@ Complete multi-layer graph for a specific application SEAL. Returns four layers:
 | `view_id` | string | Parent View Central ID |
 | `name` | string | Notification rule name |
 | `alert_types` | string[] | `"critical"` \| `"warning"` \| `"slo"` \| `"change"` \| `"deployment"` |
-| `channels` | object | `{ teams: bool, email: bool }` |
+| `channels` | object | `{ teams: bool, email: bool, teamRoles: bool }` |
 | `teams_channels` | string[] | MS Teams channel targets |
 | `email_recipients` | string[] | Email addresses |
+| `team_roles` | string[] | Role names to target (e.g., `["SRE", "App Owner"]`) |
+| `role_mode` | string | `"all"` (auto-include all matching) or `"pick"` (individual selection) |
+| `role_members` | string[] | SIDs of individually picked members (when `role_mode="pick"`) |
 | `frequency` | string | `"realtime"` \| `"daily"` \| `"weekly"` |
 | `days_of_week` | string[] | Active days |
 | `start_time` | string | Active window start (HH:MM) |
@@ -1745,11 +1822,11 @@ These endpoints need to be created to replace hardcoded frontend data.
 | `pages/Applications.jsx` | `/api/applications/enriched`, `/api/teams` | On page load |
 | `components/AppDetailModal.jsx` | `/api/applications/{id}/teams` (PUT), `/api/applications/{id}/excluded-indicators` (PUT) | Button click (Save) |
 | `components/DeploymentDetailModal.jsx` | `/api/applications/{id}/deployments/{depId}/excluded-indicators` (PUT) | Button click (Save) |
-| `components/ContactModal.jsx` | `/api/contact/send` (POST) | Form submission |
+| `components/ContactModal.jsx` | `/api/contact/send` (POST), `/api/teams/roles` | Form submission, role filtering |
 | `pages/GraphLayers.jsx` | `/api/graph/layer-seals`, `/api/graph/layers/{seal_id}` | On load + SEAL selection |
 | `components/DependencyFlow.jsx` | `/api/graph/dependencies/{id}`, `/api/graph/blast-radius/{id}` | Node click |
 | `pages/Announcements.jsx` | `/api/announcements` (GET/POST/PUT/PATCH/DELETE), `/api/announcements/notifications`, `/api/announcements/connect/weave-interfaces`, `/api/announcements/connect/validate` | Page load, form submission |
-| `pages/Teams.jsx` | `/api/teams` (GET/POST/PUT/DELETE) | Page load, CRUD actions |
+| `pages/Teams.jsx` | `/api/teams` (GET/POST/PUT/DELETE), `/api/teams/roles`, `/api/directory/search` | Page load, CRUD actions |
 | `aura/AuraChatContext.jsx` | `/api/aura/chat` (POST) | User sends message |
 | `view-central/ViewCentralDashboard.jsx` | `/api/vc-notifications/{viewId}` (GET/POST/PUT/DELETE) | Notification management |
 | `pages/IncidentZero.jsx` | *(No API yet — hardcoded data)* | — |
@@ -1777,8 +1854,30 @@ These endpoints need to be created to replace hardcoded frontend data.
 
 | File | Purpose | Key Exports |
 |------|---------|-------------|
-| `backend/main.py` | FastAPI app — all endpoints, mock data, AURA scenarios | All API routes |
-| `backend/apps_registry.py` | 81-app registry with full metadata | `APPS_REGISTRY` list |
+| `app/main.py` | FastAPI app — CORS, router registration, startup events | `app` |
+| `app/config.py` | Environment variables (USE_MOCK_DATA, SMTP, DB, CORS) | Config constants |
+| `app/schemas.py` | Pydantic request/response models | TeamCreate, TeamMember, VCNotification, etc. |
+| `app/routers/dashboard.py` | Health summary, AI analysis, regional status, incidents, activities | Dashboard API routes |
+| `app/routers/applications.py` | Enriched apps, indicator exclusions, team assignments | `/api/applications/*` |
+| `app/routers/graph.py` | Knowledge graph nodes, dependencies, blast radius, layers | `/api/graph/*` |
+| `app/routers/teams.py` | Team CRUD, roles, members endpoints | `/api/teams/*` |
+| `app/routers/directory.py` | Corporate directory search | `/api/directory/search` |
+| `app/routers/announcements.py` | Announcement CRUD, notifications, status toggle | `/api/announcements/*` |
+| `app/routers/vc_notifications.py` | View Central notification subscriptions | `/api/vc-notifications/*` |
+| `app/routers/contact.py` | Send Teams/email notifications | `/api/contact/send` |
+| `app/routers/aura.py` | AURA AI chat with SSE streaming | `/api/aura/chat` |
+| `app/services/enrichment.py` | App enrichment pipeline (status propagation, SLO computation) | `get_enriched_apps()` |
+| `app/services/graph_engine.py` | Graph traversal (BFS, blast radius, layer assembly) | Graph query functions |
+| `app/services/email.py` | SMTP email sender | `send_email()` |
+| `app/services/vc_monitor.py` | View Central notification monitoring loop | `start_vc_notification_loop()` |
+| `app/mock_data/apps_registry.py` | 81-app registry with full metadata | `APPS_REGISTRY` |
+| `app/mock_data/graph_data.py` | Nodes, edges, indicators, platforms, data centers, deployments | Graph data structures |
+| `app/mock_data/dashboard_data.py` | Incident trends, activity feed data | `INCIDENT_TRENDS` |
+| `app/mock_data/slo_data.py` | SLO targets and actuals for 26 apps | `APP_SLO_DATA` |
+| `app/mock_data/teams_data.py` | 48 teams with role-based members from directory | `TEAMS`, `MEMBER_ROLES` |
+| `app/mock_data/directory_data.py` | 200 corporate directory entries | `DIRECTORY` |
+| `app/mock_data/announcements_data.py` | Sample announcements | `ANNOUNCEMENTS` |
+| `app/mock_data/aura_data.py` | AURA chat scenario responses (11 scenarios) | `_AURA_SCENARIOS` |
 
 ---
 
@@ -2179,4 +2278,4 @@ vc_notifications (id PK)
 
 ---
 
-*Generated for the Unified Observability Portal — `obs-dashboard`*
+*Generated for the Unified Observability Portal — `uop-api` + `uop-ui`*

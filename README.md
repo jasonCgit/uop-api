@@ -78,4 +78,6 @@ SessionLocal = sessionmaker(bind=engine)
 
 ## API Documentation
 
-See [docs/API-CURRENT.md](docs/API-CURRENT.md) for endpoint reference and [docs/API_DATA.md](docs/API_DATA.md) for data specifications.
+- [docs/API-CURRENT.md](docs/API-CURRENT.md) — endpoint reference and mock data details
+- [docs/API_DATA.md](docs/API_DATA.md) — detailed data specifications and file mappings
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — architecture guide, data model, deployment

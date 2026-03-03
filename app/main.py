@@ -14,6 +14,7 @@ from app.routers import (
     vc_notifications,
     contact,
     aura,
+    directory,
 )
 from app.services.vc_monitor import start_vc_notification_loop
 
@@ -39,6 +40,7 @@ app.include_router(announcements.router)
 app.include_router(vc_notifications.router)
 app.include_router(contact.router)
 app.include_router(aura.router)
+app.include_router(directory.router)
 
 
 @app.on_event("startup")

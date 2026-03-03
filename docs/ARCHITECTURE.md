@@ -1,4 +1,4 @@
-# Application Status Observability Dashboard — Architecture Guide
+# Unified Observability Portal (UOP) — Architecture Guide
 
 ## Table of Contents
 
@@ -13,31 +13,33 @@
 9. [Deployment Guide](#9-deployment-guide)
 10. [Appendices](#appendices)
 
-**API Documentation**:
-- [API-CURRENT.md](API-CURRENT.md) — all existing backend endpoints, mock data details, developer guide
-- [API-FUTURE.md](API-FUTURE.md) — endpoints to build for Incident Zero, Customer Journey, SLO Agent, AURA AI
+**Related Documentation**:
+- [API-CURRENT.md](API-CURRENT.md) — all backend endpoints, request/response schemas, mock data details
+- [API_DATA.md](API_DATA.md) — detailed data specifications, sample payloads, file mappings
 
 ---
 
 ## 1. Overview
 
-The Application Status Observability Dashboard is a real-time operational health monitoring platform. It provides a unified view of application health, dependency relationships, incident management, and SLO tracking across the enterprise.
+The Unified Observability Portal (UOP) is a real-time operational health monitoring platform. It provides a unified view of application health, dependency relationships, incident management, and SLO tracking across the enterprise.
 
 ### Current State
 
-The application uses **mock data** for demonstration purposes. All data structures, API contracts, and business logic are designed to be replaced with live integrations. See [API-CURRENT.md](API-CURRENT.md) and [API-FUTURE.md](API-FUTURE.md) for exact contracts and mock data details.
+The platform consists of two repositories: **uop-api** (FastAPI backend) and **uop-ui** (React frontend). The backend currently uses **mock data** for demonstration purposes. All data structures, API contracts, and business logic are designed to be replaced with live integrations. See [API-CURRENT.md](API-CURRENT.md) for exact contracts and mock data details.
 
 ### Key Capabilities
 
-- **Home Dashboard**: Aggregated health summary, AI analysis, regional status, incident trends
-- **Applications Registry**: Hierarchical browse/filter by business and technology taxonomy
-- **Blast Radius (Knowledge Graph)**: Interactive multi-layer dependency graph with cross-application impact analysis
-- **Incident Zero**: Pre-incident SLO burn-rate monitoring and prevention
-- **Customer Journeys**: End-to-end journey path health tracking
-- **SLO Agent**: AI-driven SLO monitoring with automated remediation actions
-- **View Central**: Customizable widget dashboards scoped by application SEAL
-- **AURA AI**: Natural language chat interface for observability queries and summarization
-- **Announcements**: Multi-channel notification management (Teams, email, Connect banners)
+- **Executive Overview**: AI-driven summary, live health status, and context-driven measures across your entire platform ecosystem
+- **AURA AI Assistant**: AI-Powered Observability Insights — smart prompts, rich visual responses, and context-aware platform analysis
+- **Blast Radius**: Assess severity of business impacts — trace upstream and downstream impacts across applications, deployments, components, platforms, and data centers
+- **Applications**: Hierarchical application views with business and technology tree navigation, card and table layouts, status filtering, search, and expand/collapse — monitor health at every level of your org
+- **Incident Zero**: Proactive pre-incident management — burn rate alerts, error budgets, breach ETAs, and prevention timelines to stop P1s before they start
+- **Multi-Tenant Portal**: Branded portal instances with custom logos, titles, default scope filters, and one-click tenant switching
+- **View Central**: Customizable dashboards for your team — drag-and-drop widgets, real-time notifications with role-based recipients, and personalized views
+- **Customer Journeys**: End-to-end path health — step-by-step latency and error rates across every service hop in your critical workflows
+- **SLO Agent**: Autonomous agent that predicts SLO breaches, tracks error budgets, and proposes remediation before incidents happen
+- **Announcements**: Create, manage, and broadcast platform announcements — with search, filters, pinning, and live auto-refresh
+- **Teams Management**: Full CRUD team management with role-based member assignments, corporate directory search, and multi-team application associations
 
 ---
 
@@ -45,9 +47,11 @@ The application uses **mock data** for demonstration purposes. All data structur
 
 ### System Components
 
+The platform is split across two repositories:
+
 ```
 ┌─────────────────────────────────────────────────────┐
-│  Frontend (React + Vite)                            │
+│  uop-ui  (React + Vite)                             │
 │  ┌─────────┐ ┌──────────┐ ┌──────────────────────┐ │
 │  │ ScopeBar│ │Dashboard │ │ View Central Widgets │ │
 │  │(Filters)│ │  Pages   │ │ (Drag-Drop Layout)   │ │
@@ -56,45 +60,46 @@ The application uses **mock data** for demonstration purposes. All data structur
 │       └─────┬─────┴──────────────────┘              │
 │             │  FilterContext + buildFilterQueryString│
 │             ▼                                       │
-│       /api/* endpoints (with query params)          │
+│       /api/* (Vite proxy in dev, env-config in prod)│
 └─────────────────────┬───────────────────────────────┘
                       │ HTTP
 ┌─────────────────────▼───────────────────────────────┐
-│  Backend (FastAPI + Uvicorn)                        │
-│  ┌────────────────┐ ┌────────────────────────────┐  │
-│  │ APPS_REGISTRY  │ │ NODES / EDGES / INDICATORS │  │
-│  │ (81 apps)      │ │ (Knowledge Graph)          │  │
-│  └───────┬────────┘ └────────────┬───────────────┘  │
-│          │                       │                  │
-│          ▼                       ▼                  │
-│  ┌─────────────────────────────────────────────┐    │
-│  │  _get_enriched_apps()  — cached enrichment  │    │
+│  uop-api  (FastAPI + Uvicorn)                       │
+│  ┌──────────────┐  ┌─────────────────────────────┐  │
+│  │   Routers    │  │       Mock Data              │  │
+│  │ (9 modules)  │  │  apps_registry, graph_data,  │  │
+│  └──────┬───────┘  │  teams_data, directory_data  │  │
+│         │          └──────────────┬───────────────┘  │
+│         ▼                        ▼                   │
+│  ┌─────────────────────────────────────────────┐     │
+│  │  Services (enrichment, graph_engine, email)  │    │
 │  │  Indicator → Component → Deployment → App   │    │
-│  └─────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────┘
+│  └─────────────────────────────────────────────┘     │
+└──────────────────────────────────────────────────────┘
 ```
 
 ### Data Flow
 
-1. **Frontend APPS** (`appData.js`): 81 applications with business metadata (LOB, CTO, CBT, etc.) used for filter cascading and tree navigation
-2. **Backend APPS_REGISTRY** (`apps_registry.py`): Same 81 applications with additional operational fields (incidents, region, recent_issues)
-3. **Backend Enrichment**: `_get_enriched_apps()` computes health status bottom-up from graph data, attaches deployments, SLO metrics, and completeness scores
+1. **Frontend APPS** (`uop-ui/src/data/appData.js`): 81 applications with business metadata (LOB, CTO, CBT, etc.) used for filter cascading and tree navigation
+2. **Backend APPS_REGISTRY** (`uop-api/app/mock_data/apps_registry.py`): Same 81 applications with additional operational fields (incidents, region, recent_issues)
+3. **Backend Enrichment**: `enrichment.py` computes health status bottom-up from graph data, attaches deployments, SLO metrics, and completeness scores
 4. **API Filtering**: All dashboard endpoints accept filter query params and return scoped data
-5. **Frontend Rendering**: Pages fetch filtered data from API, render with scoped context
+5. **Frontend Rendering**: Pages fetch filtered data from API, render with scoped context. Page state is synced to URL params for shareable links
 
 ### Single Source of Truth Principle
 
 | Data Domain | Current Source | Target Live Source |
 |---|---|---|
-| Application catalog | `APPS_REGISTRY` (backend) + `APPS` (frontend) | **Product Catalog API (PATOOLS)** |
+| Application catalog | `APPS_REGISTRY` (`uop-api/app/mock_data/apps_registry.py`) + `APPS` (`uop-ui/src/data/appData.js`) | **Product Catalog API (PATOOLS)** |
 | Business hierarchy (LOB → Sub-LOB → Product Line → Product) | Hardcoded in both registries | **Product Catalog API** |
 | Technology hierarchy (LOB → CTO → CBT) | Hardcoded in both registries | **V12 / ERMA** |
-| Dependency graph (Component → edges) | `NODES`, `EDGES_RAW` (backend) | **ERMA / V12 / Knowledge Graph** |
-| Deployments & platforms | `DEPLOYMENT_OVERRIDES`, `PLATFORM_NODES` | **ERMA / V12** |
-| Health indicators | `INDICATOR_NODES` (backend) | **Dynatrace / Monitoring Platform** |
-| Incidents (P1/P2) | Hardcoded `INCIDENT_TRENDS`, `recent_issues` | **ServiceNow API** |
-| SLO targets & actuals | `APP_SLO_DATA` (backend) | **SLO Monitoring Platform** |
-| AI analysis & chat | Hardcoded responses | **AURA AI Streaming API** |
+| Dependency graph (Component → edges) | `NODES`, `EDGES_RAW` (`uop-api/app/mock_data/graph_data.py`) | **ERMA / V12 / Knowledge Graph** |
+| Deployments & platforms | `DEPLOYMENT_OVERRIDES`, `PLATFORM_NODES` (`uop-api/app/mock_data/graph_data.py`) | **ERMA / V12** |
+| Health indicators | `INDICATOR_NODES` (`uop-api/app/mock_data/graph_data.py`) | **Dynatrace / Monitoring Platform** |
+| Incidents (P1/P2) | `INCIDENT_TRENDS` (`uop-api/app/mock_data/dashboard_data.py`), `recent_issues` | **ServiceNow API** |
+| SLO targets & actuals | `APP_SLO_DATA` (`uop-api/app/mock_data/slo_data.py`) | **SLO Monitoring Platform** |
+| AI analysis & chat | Scenario responses (`uop-api/app/mock_data/aura_data.py`) | **AURA AI Streaming API** |
+| Teams & directory | `TEAMS` (`uop-api/app/mock_data/teams_data.py`), `DIRECTORY` (`uop-api/app/mock_data/directory_data.py`) | **Corporate Directory / Teams Service** |
 
 > **Critical**: In production, `APPS` (frontend) and `APPS_REGISTRY` (backend) must be replaced by a single API call to the Product Catalog. The current dual-source pattern exists only because mock data is static.
 
@@ -468,7 +473,7 @@ GET /monitoring/indicators/summary
 - Blast Radius — Impact Severity, incident count/trend, Executive Summary (business perspective)
 - Interactive chat with observability context
 
-The internal chat endpoint (`POST /api/aura/chat`) already uses SSE streaming — see [API-CURRENT.md](API-CURRENT.md#aura-ai-chat-endpoint). Planned summarization use cases are documented in [API-FUTURE.md](API-FUTURE.md#aura-ai-chat-endpoint-enhanced).
+The internal chat endpoint (`POST /api/aura/chat`) already uses SSE streaming — see [API-CURRENT.md](API-CURRENT.md#aura-ai-chat-endpoint).
 
 **Integration notes**:
 - The external AURA service should accept health state, incidents, and graph context as prompt input and stream tokens back
@@ -482,7 +487,7 @@ The internal chat endpoint (`POST /api/aura/chat`) already uses SSE streaming �
 
 **Purpose**: End-to-end customer journey step health.
 
-**Currently**: Mock data with 3 journeys (Trade Execution, Client Login, Document Delivery), each with steps mapping to service components. Planned internal endpoints are documented in [API-FUTURE.md](API-FUTURE.md#customer-journey-endpoints).
+**Currently**: Mock data with 3 journeys (Trade Execution, Client Login, Document Delivery), each with steps mapping to service components. These will need dedicated backend endpoints when integrating with live journey monitoring services.
 
 ---
 
@@ -492,14 +497,20 @@ The internal chat endpoint (`POST /api/aura/chat`) already uses SSE streaming �
 
 | Page | Route | Data Source | Filters Apply? |
 |---|---|---|---|
-| Dashboard (Home) | `/` | 7 API endpoints | Yes — all endpoints filtered |
+| Executive Overview (Home) | `/` | 7 API endpoints | Yes — all endpoints filtered |
 | Applications | `/applications` | `/api/applications/enriched` + local APPS | Yes — tree + status + search |
-| Blast Radius | `/blast-radius` | `/api/graph/layers/{seal}` | Partial — SEAL from filter |
+| Blast Radius (Graph Layers) | `/graph-layers` | `/api/graph/layers/{seal}` | Partial — SEAL from filter |
 | Incident Zero | `/incident-zero` | Mock data (static) | No |
 | Customer Journey | `/customer-journey` | Mock data (static) | No |
 | SLO Agent | `/slo-agent` | Mock data (static) | No |
+| Teams | `/teams` | `/api/teams`, `/api/teams/roles`, `/api/directory/search` | No |
+| Announcements | `/announcements` | `/api/announcements` | No |
 | Favorites | `/favorites` | localStorage | No |
-| View Central | `/view-central` | localStorage + widget API calls | Yes — ScopeBar + view filters |
+| View Central (listing) | `/view-central` | localStorage | No |
+| View Central (dashboard) | `/view-central/:id` | localStorage + widget API calls | Yes — ScopeBar + view filters |
+| Multi-Tenant Portal | `/portals` | localStorage (tenant config) | No |
+| Links | `/links` | Static data | No |
+| Profile | `/profile` | localStorage (user prefs) | No |
 
 ### 7.2 Filter System
 
@@ -513,7 +524,7 @@ ScopeBar (UI) → FilterContext (React Context) → buildFilterQueryString() →
 - `searchText`: `"Morgan"`
 - Persisted to sessionStorage keyed by tenant ID
 
-**Filter groups** (from `appData.js`):
+**Filter groups** (from `uop-ui/src/data/appData.js`):
 - PATOOLS — Business Hierarchy: LOB, Sub-LOB, Product Line, Product
 - V12 — Technology Hierarchy: CTO, CBT
 - Application: SEAL, App Owner, CPOF, Risk Ranking, Classification, State, Investment Strategy, RTO
@@ -525,12 +536,16 @@ ScopeBar (UI) → FilterContext (React Context) → buildFilterQueryString() →
 
 | State | Storage | Scope |
 |---|---|---|
-| Active filters + search | sessionStorage (`obs-filter-state`) | Per tenant ID |
+| Active filters + search | URL params + sessionStorage (`obs-filter-state`) | Shareable, per tenant |
 | Tree expansions (Applications) | sessionStorage (`apps-tree-expanded`) | Per tree mode |
-| Application page state | sessionStorage (`apps-page-state`) | Global |
+| Application page state (status, path, tree, view) | URL params (`?status=&path=&tree=&view=`) + sessionStorage | Shareable |
 | GraphLayers SEAL + layers | URL search params (`?seal=X&layers=Y,Z`) | Shareable |
 | GraphLayers sidebar tab | sessionStorage (`gl-sidebar-tab`) | Global |
-| Customer Journey active tab | sessionStorage (`cj-active-journey`) | Global |
+| Customer Journey active tab | URL params (`?journey=`) + sessionStorage | Shareable |
+| Announcements filters | URL params (`?channel=&q=&closed=`) | Shareable |
+| Teams search | URL params (`?q=`) | Shareable |
+| Favorites search | URL params (`?q=`) | Shareable |
+| View Central listing search | URL params (`?q=`) | Shareable |
 | View Central views + widgets | localStorage (`obs-view-centrals`) | Permanent |
 | Favorites | localStorage (within view centrals) | Permanent |
 
@@ -559,7 +574,7 @@ ScopeBar (UI) → FilterContext (React Context) → buildFilterQueryString() →
 
 ### 8.1 Dual Data Source (Frontend + Backend)
 
-**Issue**: Application metadata exists in both `APPS` (frontend `appData.js`) and `APPS_REGISTRY` (backend `apps_registry.py`). If the two registries diverge, filter options (ScopeBar) will not match API results.
+**Issue**: Application metadata exists in both `APPS` (`uop-ui/src/data/appData.js`) and `APPS_REGISTRY` (`uop-api/app/mock_data/apps_registry.py`). If the two registries diverge, filter options (ScopeBar) will not match API results.
 
 **Resolution**: Replace both with a single Product Catalog API call (see [Section 2 — Single Source of Truth](#single-source-of-truth-principle) and [Section 6.1 — PATOOLS](#61-product-catalog-api-patools)).
 
@@ -576,7 +591,7 @@ ScopeBar (UI) → FilterContext (React Context) → buildFilterQueryString() →
 
 ### 8.3 Static Pages Without API Integration
 
-**Incident Zero**, **Customer Journey**, and **SLO Agent** pages use entirely hardcoded frontend data. They do not call any backend API and will need dedicated endpoints. See [API-FUTURE.md](API-FUTURE.md) for the planned endpoint specs.
+**Incident Zero**, **Customer Journey**, and **SLO Agent** pages use entirely hardcoded frontend data. They do not call any backend API and will need dedicated backend endpoints when integrating with live services.
 
 ### 8.4 Potential Bugs
 
@@ -604,59 +619,116 @@ ScopeBar (UI) → FilterContext (React Context) → buildFilterQueryString() →
 
 ## 9. Deployment Guide
 
-### 9.1 Project Structure
+### 9.1 Repository Structure
+
+The platform is split into two independently deployable repositories:
 
 ```
-obs-dashboard/
-├── backend/
-│   ├── main.py              # FastAPI application (all endpoints)
-│   ├── apps_registry.py     # Application registry (81 apps)
-│   └── requirements.txt     # Python dependencies
-├── frontend/
-│   ├── src/                  # React source code
-│   ├── dist/                 # Built output (after npm run build)
-│   └── package.json
-├── manifest.yml              # Cloud Foundry deployment config
-├── requirements.txt          # Root-level requirements for CF
-├── runtime.txt               # Python version for CF
-├── .cfignore                 # CF ignore (excludes node_modules, keeps dist/)
-└── .gitignore                # Git ignore (excludes dist/, node_modules/)
+uop-api/                          # FastAPI backend
+├── app/
+│   ├── main.py                   # FastAPI app, CORS, router registration
+│   ├── config.py                 # Environment variables (USE_MOCK_DATA, SMTP, DB, CORS)
+│   ├── schemas.py                # Pydantic request/response models
+│   ├── routers/                  # Endpoint modules
+│   │   ├── dashboard.py          # Health summary, AI analysis, regional status, incidents
+│   │   ├── applications.py       # Enriched apps, indicator exclusions, team assignments
+│   │   ├── graph.py              # Knowledge graph nodes, dependencies, blast radius, layers
+│   │   ├── teams.py              # Team CRUD, roles, members
+│   │   ├── directory.py          # Corporate directory search
+│   │   ├── announcements.py      # Announcement CRUD, notifications
+│   │   ├── vc_notifications.py   # View Central notification subscriptions
+│   │   ├── contact.py            # Send Teams/email notifications
+│   │   └── aura.py               # AURA AI chat (SSE streaming)
+│   ├── services/                 # Business logic
+│   │   ├── enrichment.py         # App enrichment pipeline (status propagation, SLO)
+│   │   ├── graph_engine.py       # Graph traversal (BFS, blast radius)
+│   │   ├── email.py              # SMTP email sender
+│   │   └── vc_monitor.py         # View Central notification monitoring loop
+│   └── mock_data/                # Static seed data for demo mode
+│       ├── apps_registry.py      # 81 applications with operational fields
+│       ├── graph_data.py         # Nodes, edges, indicators, platforms, data centers
+│       ├── dashboard_data.py     # Incident trends, activity data
+│       ├── slo_data.py           # SLO targets and actuals
+│       ├── teams_data.py         # 48 teams with role-based members
+│       ├── directory_data.py     # 200 corporate directory entries
+│       ├── announcements_data.py # Sample announcements
+│       └── aura_data.py          # AURA chat scenario responses
+├── docs/                         # API specifications and architecture
+├── manifest.yml                  # Cloud Foundry deployment (python_buildpack)
+├── requirements.txt              # Python dependencies
+├── runtime.txt                   # Python version for CF
+└── Procfile                      # Process command
+
+uop-ui/                           # React frontend
+├── src/
+│   ├── main.jsx                  # App entry point
+│   ├── App.jsx                   # Router, layout (flex column), TopNav, ScopeBar
+│   ├── FilterContext.jsx         # Global filter state + URL param sync
+│   ├── pages/                    # Page components (Dashboard, Applications, Teams, etc.)
+│   ├── components/               # Shared components (TopNav, ScopeBar, modals, filters)
+│   ├── aura/                     # AURA AI assistant chat panel
+│   ├── view-central/             # View Central dashboards, widgets, notifications
+│   ├── tenant/                   # Multi-tenant theme/portal management
+│   ├── data/                     # Static frontend data (appData.js)
+│   └── utils/                    # Helper utilities
+├── public/
+│   └── env-config.js             # Runtime environment config (API_URL)
+├── manifest.yml                  # Cloud Foundry deployment (staticfile_buildpack)
+├── Staticfile                    # Staticfile buildpack config (pushstate routing)
+├── vite.config.js                # Vite config with /api proxy to localhost:8080
+└── package.json
 ```
 
 ### 9.2 Local Development
 
 ```bash
-# Terminal 1 — Backend
-cd backend
+# Terminal 1 — API
+cd uop-api
 pip install -r requirements.txt
-uvicorn main:app --port 8080 --reload
+uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload
 
-# Terminal 2 — Frontend
-cd frontend
+# Terminal 2 — UI
+cd uop-ui
 npm install
 npm run dev          # Vite dev server at localhost:5174, proxies /api → localhost:8080
 ```
 
+Open `http://localhost:5174` in your browser.
+
 ### 9.3 Cloud Foundry Deployment
 
-The backend serves both the API and the built frontend static files. The `_FRONTEND_DIST` path auto-detects both repo layout (`backend/main.py`) and flat deploy layout (`main.py` at root).
+The two repos deploy independently as separate CF applications:
 
-**From the repository:**
+**API deployment:**
 ```bash
-cd frontend && npm run build && cd ..    # Build frontend → frontend/dist/
-cf push                                  # Uses manifest.yml
+cd uop-api
+cf push              # Uses manifest.yml with python_buildpack
 ```
 
-**From flat deploy structure** (if copying files manually):
+**UI deployment:**
 ```bash
-# Ensure these are at root: main.py, apps_registry.py, frontend/dist/
-# Ensure .cfignore does NOT list dist/
-cf push
+cd uop-ui
+npm run build                         # Build → dist/
+# Update dist/env-config.js with deployed API URL:
+# window.__ENV__ = { API_URL: "https://uop-api.apps.cf.example.com" }
+cf push              # Uses manifest.yml with staticfile_buildpack, serves from dist/
 ```
 
-### 9.4 Environment Variables (Future)
+### 9.4 Environment Variables
 
-When integrating with live APIs, the following environment variables should be configured:
+**Current (`uop-api/app/config.py`):**
+
+| Variable | Default | Description |
+|---|---|---|
+| `USE_MOCK_DATA` | `true` | Use in-memory mock data (set `false` for real APIs) |
+| `DATABASE_URL` | ` ` | MySQL connection string for real data |
+| `SMTP_HOST` / `SMTP_PORT` | ` ` / `587` | SMTP gateway for email notifications |
+| `SMTP_USER` / `SMTP_PASSWORD` | ` ` | SMTP credentials |
+| `SMTP_FROM` | `uop-api@example.com` | Sender email address |
+| `CORS_ORIGINS` | `*` | Comma-separated allowed origins |
+| `LOG_LEVEL` | `INFO` | Python logging level |
+
+**Future (for live API integration):**
 
 | Variable | Description |
 |---|---|
@@ -669,7 +741,12 @@ When integrating with live APIs, the following environment variables should be c
 | `AURA_API_URL` | AURA AI streaming API endpoint |
 | `AURA_API_KEY` | AURA AI API key |
 | `TEAMS_WEBHOOK_URL` | Microsoft Teams webhook for notifications |
-| `SMTP_HOST` / `SMTP_PORT` | SMTP gateway for email notifications |
+
+**Frontend runtime config (`uop-ui/public/env-config.js`):**
+
+| Variable | Description |
+|---|---|
+| `API_URL` | Empty in dev (Vite proxy handles routing). Set to deployed API URL in production |
 
 ---
 
