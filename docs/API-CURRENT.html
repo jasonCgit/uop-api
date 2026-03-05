@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UOP API Reference</title>
+<style>
+  :root {
+    --bg: #ffffff; --bg-alt: #f8f9fb; --bg-code: #f1f3f5;
+    --border: #e0e3e8; --border-light: #ebedf0;
+    --text: #1a1d23; --text-muted: #5a6270;
+    --accent: #3b82f6; --accent-light: #dbeafe;
+    --green: #16a34a; --green-bg: #dcfce7;
+    --amber: #d97706; --amber-bg: #fef3c7;
+    --red: #dc2626; --red-bg: #fee2e2;
+    --purple: #7c3aed; --purple-bg: #ede9fe;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font); color: var(--text); background: var(--bg); line-height: 1.65; font-size: 15px; max-width: 960px; margin: 0 auto; padding: 32px 40px 80px; }
+  h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+  h1 small { display: block; font-size: 14px; font-weight: 400; color: var(--text-muted); margin-top: 4px; }
+  h2 { font-size: 20px; font-weight: 700; margin: 48px 0 16px; padding-bottom: 10px; border-bottom: 2px solid var(--border); }
+  h3 { font-size: 16px; font-weight: 600; margin: 28px 0 12px; }
+  h4 { font-size: 14px; font-weight: 600; margin: 20px 0 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  p { margin-bottom: 12px; }
+  ul, ol { margin: 0 0 12px 24px; }
+  li { margin-bottom: 4px; }
+  a { color: var(--accent); }
+  hr { border: none; border-top: 1px solid var(--border-light); margin: 32px 0; }
+  code { font-family: var(--mono); font-size: 12px; background: var(--bg-code); padding: 2px 6px; border-radius: 4px; }
+  pre { background: var(--bg-code); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 16px 20px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.6; margin: 12px 0 16px; }
+  pre code { background: none; padding: 0; }
+
+  .card { background: var(--bg); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow); }
+  .card.accent-left { border-left: 4px solid var(--accent); }
+
+  .table-wrap { overflow-x: auto; margin: 16px 0; border: 1px solid var(--border-light); border-radius: var(--radius); box-shadow: var(--shadow); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { background: var(--bg-alt); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); padding: 10px 14px; text-align: left; border-bottom: 2px solid var(--border); }
+  tbody td { padding: 10px 14px; border-bottom: 1px solid var(--border-light); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--accent-light); }
+  tbody tr:nth-child(even) { background: var(--bg-alt); }
+  tbody tr:nth-child(even):hover { background: var(--accent-light); }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; margin: 1px 2px; }
+  .badge-blue { background: var(--accent-light); color: #1d4ed8; }
+  .badge-green { background: var(--green-bg); color: #15803d; }
+  .badge-amber { background: var(--amber-bg); color: #92400e; }
+  .badge-red { background: var(--red-bg); color: #991b1b; }
+  .badge-purple { background: var(--purple-bg); color: #5b21b6; }
+
+  .method { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; font-family: var(--mono); letter-spacing: 0.5px; margin-right: 8px; }
+  .method-get { background: var(--green-bg); color: #15803d; }
+  .method-post { background: var(--accent-light); color: #1d4ed8; }
+  .method-put { background: var(--amber-bg); color: #92400e; }
+  .method-patch { background: var(--purple-bg); color: #5b21b6; }
+  .method-delete { background: var(--red-bg); color: #991b1b; }
+
+  .endpoint { display: flex; align-items: center; margin: 24px 0 8px; }
+  .endpoint code { font-size: 14px; font-weight: 600; }
+
+  .callout { display: flex; gap: 12px; padding: 14px 16px; border-radius: var(--radius); margin: 16px 0; font-size: 13px; line-height: 1.5; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout-info { background: var(--accent-light); border: 1px solid #93c5fd; }
+  .callout-warn { background: var(--amber-bg); border: 1px solid #fcd34d; }
+
+  @media print { body { padding: 20px; } .card, .table-wrap { box-shadow: none; break-inside: avoid; } tbody tr:hover { background: inherit; } }
+</style>
+</head>
+<body>
+
+<h1>
+  Current API Reference
+  <small>All endpoints served by FastAPI backend &mdash; Base URL: <code>http://localhost:8000</code></small>
+</h1>
+
+<p style="margin-bottom:24px; color:var(--text-muted); font-size:13px;">
+  Related docs:
+  <a href="ARCHITECTURE.html">Architecture Guide</a> &nbsp;|&nbsp;
+  <a href="API_DATA.html">API_DATA</a> &mdash; detailed schemas &amp; payloads
+</p>
+
+<div class="callout callout-warn">
+  <span class="callout-icon">&#9888;</span>
+  <div><strong>Mock Data:</strong> All endpoints currently return deterministic mock data from in-memory Python data structures. No external services are called. See the <a href="#mock-data">Mock Data</a> section at the end for details.</div>
+</div>
+
+<hr>
+
+<!-- ── Common Query Parameters ── -->
+<h2>Common Query Parameters</h2>
+
+<p>All dashboard endpoints accept these filter parameters. Filters use AND logic &mdash; all active filters are additive.</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Parameter</th><th>Type</th><th>Format</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>lob</code></td><td>string[]</td><td><code>?lob=AWM&amp;lob=CIB</code></td><td>Filter by Line of Business</td></tr>
+    <tr><td><code>subLob</code></td><td>string[]</td><td><code>?subLob=Asset+Management</code></td><td>Filter by Sub-LOB</td></tr>
+    <tr><td><code>cto</code></td><td>string[]</td><td><code>?cto=Jon+Glennie</code></td><td>Filter by CTO name</td></tr>
+    <tr><td><code>cbt</code></td><td>string[]</td><td><code>?cbt=Kalpesh+Narkhede</code></td><td>Filter by CBT name</td></tr>
+    <tr><td><code>seal</code></td><td>string[]</td><td><code>?seal=16649&amp;seal=35115</code></td><td>Filter by application SEAL ID</td></tr>
+    <tr><td><code>status</code></td><td>string[]</td><td><code>?status=critical</code></td><td>Filter by computed health status</td></tr>
+    <tr><td><code>search</code></td><td>string</td><td><code>?search=Morgan</code></td><td>Free-text search on name or SEAL</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>Multi-value params use repeated keys: <code>?lob=AWM&amp;lob=CIB</code> (not comma-separated).</p>
+
+<hr>
+
+<!-- ── Dashboard Endpoints ── -->
+<h2>Dashboard Endpoints</h2>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/health-summary</code></div>
+<p>Aggregated health metrics across all (or filtered) applications.</p>
+<pre><code>{
+  "critical_issues": 5,
+  "warnings": 12,
+  "recurring_30d": 23,
+  "incidents_today": 8,
+  "trends": {
+    "critical_issues": { "spark": [3, 4, 5, 4, 5], "pct": 12.5 },
+    "warnings":        { "spark": [10, 11, 12, 11, 12], "pct": -3.2 },
+    "recurring_30d":   { "spark": [20, 22, 23, 21, 23], "pct": 5.0 },
+    "incidents_today": { "spark": [6, 7, 8, 7, 8], "pct": 8.1 }
+  }
+}</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/ai-analysis</code></div>
+<p>AI-generated health analysis and recommendations.</p>
+<pre><code>{
+  "critical_alert": "Payment Gateway API experiencing elevated error rates...",
+  "trend_analysis": "P1 incidents trending 15% higher than 30-day average...",
+  "recommendations": [
+    "Investigate payment gateway connection pool exhaustion",
+    "Review email notification service SMTP configuration",
+    "Schedule capacity review for Morgan Money NAV service"
+  ]
+}</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/regional-status</code></div>
+<p>Health status aggregated by region. Always returns all 3 regions.</p>
+<pre><code>[
+  { "region": "NA",   "status": "critical", "sod_impacts": 2, "app_issues": 5 },
+  { "region": "EMEA", "status": "warning",  "sod_impacts": 1, "app_issues": 3 },
+  { "region": "APAC", "status": "healthy",  "sod_impacts": 0, "app_issues": 0 }
+]</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/critical-apps</code></div>
+<p>Applications currently in critical status.</p>
+<pre><code>[
+  {
+    "id": "morgan-money", "name": "Morgan Money", "seal": "16649",
+    "status": "critical", "current_issues": 2, "recurring_30d": 6, "last_incident": "25m ago",
+    "recent_issues": [
+      { "description": "NAV calculation timeout", "severity": "critical", "time_ago": "25m ago" }
+    ]
+  }
+]</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/warning-apps</code></div>
+<p>Applications currently in warning status. Same response schema as <code>/api/critical-apps</code>.</p>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/incident-trends</code></div>
+<p>90-day incident frequency data for trend charts.</p>
+<pre><code>{
+  "data": [
+    { "week": 1, "label": "Dec 2", "p1": 1, "p2": 36 },
+    { "week": 2, "label": "Dec 9", "p1": 2, "p2": 38 }
+  ],
+  "summary": { "mttr_hours": 4.2, "mtta_minutes": 12, "resolution_rate": 94, "escalation_rate": 18 }
+}</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/active-incidents</code></div>
+<p>Current active incident breakdown by priority.</p>
+<pre><code>{
+  "week_label": "Feb 24 – Mar 2",
+  "p1": { "total": 3, "trend": -15, "breakdown": [{ "label": "Resolved", "count": 1 }, { "label": "In Progress", "count": 2 }] },
+  "p2": { "total": 12, "trend": 5, "breakdown": [...] },
+  "convey": { "total": 2 }, "spectrum": { "total": 1 }
+}</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/recent-activities</code></div>
+<p>Activity feed grouped by category.</p>
+<pre><code>{
+  "categories": [{ "category": "P1 Critical", "color": "#f44336", "items": [...] }],
+  "frequent": [{ "app": "Morgan Money", "seal": "16649", "occurrences": 6, "last_seen": "25m ago" }]
+}</code></pre>
+
+<hr>
+
+<!-- ── Application Endpoints ── -->
+<h2>Application Endpoints</h2>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/applications/enriched</code></div>
+<p>Full application catalog with computed health data. See <a href="ARCHITECTURE.html">Architecture Guide</a> for the enrichment pipeline.</p>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/indicator-types</code></div>
+<p>Available health indicator types for exclusion filtering.</p>
+<pre><code>["Process Group", "Service", "Synthetic"]</code></pre>
+
+<div class="endpoint"><span class="method method-put">PUT</span> <code>/api/applications/{app_id}/excluded-indicators</code></div>
+<p>Exclude indicator types from health computation. <code>app_id</code> = slug format (e.g., <code>morgan-money</code>).</p>
+<pre><code>// Request
+{ "excluded_indicators": ["Synthetic"] }
+
+// Response
+{ "app_id": "morgan-money", "excluded_indicators": ["Synthetic"] }</code></pre>
+
+<div class="endpoint"><span class="method method-put">PUT</span> <code>/api/applications/{app_id}/deployments/{dep_id}/excluded-indicators</code></div>
+<p>Exclude indicator types at the deployment level. Same request/response format.</p>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/applications/{app_id}/teams</code></div>
+<p>Response: <code>{ "team_ids": [1, 5, 12] }</code></p>
+
+<div class="endpoint"><span class="method method-put">PUT</span> <code>/api/applications/{app_id}/teams</code></div>
+<p>Request: <code>{ "team_ids": [1, 5, 12] }</code></p>
+
+<hr>
+
+<!-- ── Knowledge Graph Endpoints ── -->
+<h2>Knowledge Graph Endpoints</h2>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/graph/nodes</code></div>
+<p>All component nodes in the dependency graph.</p>
+<pre><code>[{ "id": "connect-portal", "label": "CONNECT-PORTAL", "status": "warning", "team": "Connect Platform", "sla": "99.9%", "incidents_30d": 3 }]</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/graph/dependencies/{service_id}</code></div>
+<p>Forward dependency traversal &mdash; what does this service depend on?</p>
+<pre><code>{
+  "root": { "id": "connect-portal", "label": "CONNECT-PORTAL", "status": "warning" },
+  "dependencies": [],
+  "edges": [{ "source": "connect-portal", "target": "connect-cloud-gw" }]
+}</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/graph/blast-radius/{service_id}</code></div>
+<p>Reverse dependency traversal &mdash; what is impacted if this service fails?</p>
+<pre><code>{
+  "root": { "id": "payment-gateway" },
+  "impacted": [],
+  "edges": [{ "source": "mm-api", "target": "payment-gateway" }]
+}</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/graph/layer-seals</code></div>
+<p>Application SEALs with knowledge graph data.</p>
+<pre><code>[
+  { "seal": "88180", "label": "Connect OS", "component_count": 6 },
+  { "seal": "90176", "label": "Advisor Connect", "component_count": 10 }
+]</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/graph/layers/{seal_id}</code></div>
+<p>Complete multi-layer graph for a specific SEAL. Returns five layers: components, platform, datacenter, indicators, and cross-SEAL external nodes.</p>
+<pre><code>{
+  "seal": "88180",
+  "components": {
+    "nodes": [{ "id": "connect-portal", "label": "CONNECT-PORTAL", "status": "warning", ... }],
+    "edges": [{ "source": "connect-portal", "target": "connect-cloud-gw", "direction": "uni" }],
+    "external_nodes": [{ "id": "advisor-api-gateway", "external": true, "external_seal": "90176", "cross_direction": "downstream" }]
+  },
+  "platform": { "nodes": [...], "edges": [...] },
+  "datacenter": { "nodes": [...], "edges": [...] },
+  "indicators": { "nodes": [...], "edges": [...] }
+}</code></pre>
+
+<hr>
+
+<!-- ── Team Management ── -->
+<h2>Team Management Endpoints</h2>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/teams</code></div>
+<p>Returns all teams with members.</p>
+<pre><code>[{
+  "id": 1, "name": "Client Data",
+  "emails": ["client-data@jpmchase.com"],
+  "teams_channels": ["#client-data-alerts"],
+  "members": [{ "sid": "A10042", "firstName": "John", "lastName": "Doe", "email": "john.doe@jpmchase.com", "role": "SRE" }]
+}]</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/teams/roles</code></div>
+<p>Returns available team member roles.</p>
+<pre><code>["SRE", "App Owner", "Dev Lead", "Engineering Manager", "Product Owner", "QA Lead", "Platform Engineer", "Scrum Master"]</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/teams/{team_id}</code></div>
+<p>Returns a single team (same schema as above).</p>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/teams/{team_id}/members</code></div>
+<p>Returns members of a team. Optional <code>?role=SRE</code> filter.</p>
+
+<div class="endpoint"><span class="method method-post">POST</span> <code>/api/teams</code></div>
+<p>Create a team.</p>
+<pre><code>{ "name": "New Team", "emails": [...], "teams_channels": [...], "members": [...] }</code></pre>
+
+<div class="endpoint"><span class="method method-put">PUT</span> <code>/api/teams/{team_id}</code></div>
+<p>Update a team. All fields optional (including members).</p>
+
+<div class="endpoint"><span class="method method-delete">DELETE</span> <code>/api/teams/{team_id}</code></div>
+<p>Delete a team. Response: <code>{ "ok": true }</code></p>
+
+<hr>
+
+<!-- ── Directory ── -->
+<h2>Directory Endpoints</h2>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/directory/search</code></div>
+<p>Search corporate directory. Required param: <code>q</code> (case-insensitive substring). Returns top 20.</p>
+<pre><code>[{ "sid": "A10042", "firstName": "John", "lastName": "Doe", "email": "john.doe@jpmchase.com", "department": "Technology", "title": "Senior Engineer" }]</code></pre>
+
+<hr>
+
+<!-- ── Announcements ── -->
+<h2>Announcement Endpoints</h2>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/announcements</code></div>
+<p>Query params: <code>status</code> (open/closed), <code>channel</code> (teams/email/connect/banner), <code>search</code></p>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/announcements/notifications</code></div>
+<p>Returns open announcements marked for banner display.</p>
+
+<div class="endpoint"><span class="method method-post">POST</span> <code>/api/announcements</code></div>
+<p>Create announcement with multi-channel targeting.</p>
+<pre><code>{
+  "title": "Scheduled Maintenance", "status": "open", "severity": "warning",
+  "impacted_apps": ["Morgan Money"], "description": "Planned maintenance...",
+  "channels": { "teams": { "enabled": true }, "email": { "enabled": true, "recipients": [...] }, "banner": { "enabled": true } },
+  "regions": ["NA", "EMEA"]
+}</code></pre>
+
+<div class="endpoint"><span class="method method-put">PUT</span> <code>/api/announcements/{id}</code></div>
+<p>Update announcement.</p>
+
+<div class="endpoint"><span class="method method-patch">PATCH</span> <code>/api/announcements/{id}/status</code></div>
+<p>Toggle status between open/closed.</p>
+
+<div class="endpoint"><span class="method method-delete">DELETE</span> <code>/api/announcements/{id}</code></div>
+
+<h3>Connect Integration</h3>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/announcements/connect/weave-interfaces</code></div>
+<p>Available Weave interface entities for Connect-channel targeting.</p>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/announcements/connect/validate</code></div>
+<p>Validate targeting selection and return estimated user reach. Params: <code>entities</code>, <code>regions</code></p>
+
+<hr>
+
+<!-- ── AURA AI Chat ── -->
+<h2>AURA AI Chat Endpoint</h2>
+
+<div class="endpoint"><span class="method method-post">POST</span> <code>/api/aura/chat</code></div>
+<p>Streams responses via Server-Sent Events (SSE).</p>
+
+<h4>Request</h4>
+<pre><code>{
+  "message": "What is the current health status of Morgan Money?",
+  "conversation_id": "conv-123",
+  "context": { "current_page": "dashboard", "active_filters": { "lob": ["AWM"] } }
+}</code></pre>
+
+<h4>SSE Event Protocol</h4>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Event</th><th>Payload</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>meta</code></td><td><code>{ message_id, timestamp }</code></td><td>Sent first &mdash; conversation metadata</td></tr>
+    <tr><td><code>block</code></td><td><code>{ type, data }</code></td><td>Content block (text, metric_cards, status_list, chart, recommendations)</td></tr>
+    <tr><td><code>followups</code></td><td><code>["question1", ...]</code></td><td>Suggested follow-up questions</td></tr>
+    <tr><td><code>done</code></td><td><code>{}</code></td><td>Stream complete signal</td></tr>
+  </tbody>
+</table>
+</div>
+
+<hr>
+
+<!-- ── Outcome Measures ── -->
+<h2>Outcome Measures Endpoints</h2>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/outcome-measures/summary</code></div>
+<p>Executive KPI bar and section list for all 5 outcome sections.</p>
+<pre><code>{
+  "app_count": 81,
+  "sections": [{ "id": 1, "key": "usage", "label": "Usage &amp; Adoption" }, ...],
+  "executive_kpis": [{ "label": "AI Prompts/App", "value": 42.5, "baseline": 13.9, "change_pct": 206.1, "spark": [...] }],
+  "month_labels": ["Apr'25", "May'25", ..., "Mar'26"]
+}</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/outcome-measures/section/{section_id}</code></div>
+<p>Section-specific KPI cards and trend data. <code>section_id</code> = 1-5.</p>
+<pre><code>{
+  "section": { "id": 1, "key": "usage", "label": "Usage &amp; Adoption" },
+  "metrics": [{ "key": "prompts_per_app", "label": "AI Prompts / App / Month", "current": 42.5, "baseline": 13.9, "trend": [...] }]
+}</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/outcome-measures/leaderboard</code></div>
+<p>CTO/CBT ranked table. Params: <code>section_id</code> (required), <code>sort_by</code> (optional metric key).</p>
+<pre><code>{
+  "rows": [{ "cto": "Lakith Leelasena", "cbt": "Kent Zheng", "app_count": 4, "metrics": { ... }, "spark": { ... } }],
+  "metric_keys": ["prompts_per_app", "click_through_rate"]
+}</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/outcome-measures/coverage</code></div>
+<p>Baselines and coverage data (section 5 only).</p>
+<pre><code>{
+  "coverages": [{ "key": "slo_defined", "label": "SLO Defined", "covered": 68, "total": 81, "pct": 84.0 }],
+  "heatmap": [{ "cto": "Lakith Leelasena", "cbt": "Kent Zheng", "coverage_pct": 87.5 }]
+}</code></pre>
+
+<hr>
+
+<!-- ── Essential Services ── -->
+<h2>Essential Services Endpoints</h2>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/essential-services/summary</code></div>
+<p>All 15 Essential Services with RAG status, app counts, risk matrix, and KPIs. Accepts standard filter params.</p>
+<pre><code>{
+  "services": [{ "id": "3213", "name": "Administer Sweep Functionality", "status": "healthy", "criticality": "high", "app_count": 8 }],
+  "kpis": { "total": 15, "healthy": 9, "degraded": 4, "down": 2 },
+  "risk_matrix": { "critical_healthy": 3, "critical_degraded": 1, ... }
+}</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/essential-services/{service_id}</code></div>
+<p>Detail for one ES &mdash; mapped apps with deployment info, CTO/CBT coverage.</p>
+<pre><code>{
+  "service": { "id": "3213", "name": "...", "status": "healthy", "criticality": "high" },
+  "mapped_apps": [{ "seal": "90556", "name": "Spectrum UI", "status": "healthy", "deploymentTypes": ["gap", "gkp"] }],
+  "cto_coverage": [...], "cbt_coverage": [...]
+}</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/essential-services/business-processes</code></div>
+<p>Business processes with their ES dependencies and derived status.</p>
+<pre><code>{
+  "processes": [{ "id": "bp1", "name": "NAV Calculation &amp; Distribution", "status": "degraded", "services": [...], "service_count": 4 }]
+}</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/essential-services/impact-graph/{service_id}</code></div>
+<p>ReactFlow-compatible graph data: ES &rarr; deployment types &rarr; apps.</p>
+<pre><code>{
+  "nodes": [{ "id": "es-3213", "type": "service", "data": { "label": "...", "status": "healthy" } }, ...],
+  "edges": [{ "source": "es-3213", "target": "dep-gap" }, ...]
+}</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/essential-services/tree-mapping</code></div>
+<p>How ES map to both Business and Technology organizational trees.</p>
+
+<hr>
+
+<!-- ── Situation Room ── -->
+<h2>Situation Room Endpoints</h2>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/situation-room/situations</code></div>
+<p>List all situations (summary fields).</p>
+<pre><code>[{ "id": 1, "incident_number": "INC0012345", "title": "Database failover event", "state": "Investigating", "priority": "P1 - Critical" }]</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/situation-room/options</code></div>
+<p>Dropdown options (timeline, next_update, state, priority).</p>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/situation-room/systems</code></div>
+<p>System definitions (logical groupings of apps by SEAL).</p>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/situation-room/systems/{system_id}/capabilities</code></div>
+<p>Component labels for a system's apps.</p>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/situation-room/situations/{situation_id}</code></div>
+<p>Full situation detail with computed systems table.</p>
+<pre><code>{
+  "id": 1, "incident_number": "INC0012345", "state": "Investigating", "priority": "P1 - Critical",
+  "systems": [{ "id": "sys-trading", "name": "Trading Platform", "status": "critical", "app_count": 3, "timeline": "T0 - Detected" }]
+}</code></pre>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/situation-room/situations/{situation_id}/report</code></div>
+<p>Deep-dive report data for PDF export.</p>
+
+<div class="endpoint"><span class="method method-post">POST</span> <code>/api/situation-room/situations</code></div>
+<p>Create a new situation.</p>
+
+<div class="endpoint"><span class="method method-put">PUT</span> <code>/api/situation-room/situations/{situation_id}</code></div>
+<p>Update situation fields.</p>
+
+<div class="endpoint"><span class="method method-patch">PATCH</span> <code>/api/situation-room/situations/{situation_id}/systems/{system_id}</code></div>
+<p>Update per-system overrides (timeline, capabilities, SRE leads, next update).</p>
+
+<div class="endpoint"><span class="method method-delete">DELETE</span> <code>/api/situation-room/situations/{situation_id}</code></div>
+<p>Delete a situation.</p>
+
+<hr>
+
+<!-- ── View Central Notifications ── -->
+<h2>View Central Notification Endpoints</h2>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/vc-notifications/{view_id}</code></div>
+<p>All notification rules for a View Central dashboard.</p>
+
+<div class="endpoint"><span class="method method-post">POST</span> <code>/api/vc-notifications/{view_id}</code></div>
+<p>Create a notification rule.</p>
+
+<div class="endpoint"><span class="method method-put">PUT</span> <code>/api/vc-notifications/{view_id}/{notif_id}</code></div>
+<p>Update a notification rule.</p>
+
+<div class="endpoint"><span class="method method-patch">PATCH</span> <code>/api/vc-notifications/{view_id}/{notif_id}/toggle</code></div>
+<p>Toggle enabled/disabled.</p>
+
+<div class="endpoint"><span class="method method-delete">DELETE</span> <code>/api/vc-notifications/{view_id}/{notif_id}</code></div>
+<p>Delete a notification rule.</p>
+
+<div class="endpoint"><span class="method method-post">POST</span> <code>/api/vc-notifications/{view_id}/{notif_id}/test</code></div>
+<p>Send a test email for a notification rule.</p>
+
+<hr>
+
+<!-- ── Roles ── -->
+<h2>Role Management Endpoints</h2>
+
+<div class="endpoint"><span class="method method-get">GET</span> <code>/api/teams/roles</code></div>
+<p>List all available member roles.</p>
+
+<div class="endpoint"><span class="method method-post">POST</span> <code>/api/teams/roles</code></div>
+<p>Create a new role. 409 if name exists. Request: <code>{ "name": "New Role" }</code></p>
+
+<div class="endpoint"><span class="method method-put">PUT</span> <code>/api/teams/roles/{role_name}</code></div>
+<p>Rename a role. Cascades to all team members using it.</p>
+
+<div class="endpoint"><span class="method method-delete">DELETE</span> <code>/api/teams/roles/{role_name}</code></div>
+<p>Delete a role. 409 if any members are assigned.</p>
+
+<hr>
+
+<!-- ── Contact ── -->
+<h2>Contact Endpoint</h2>
+
+<div class="endpoint"><span class="method method-post">POST</span> <code>/api/contact/send</code></div>
+<p>Send notification to teams/individuals.</p>
+<pre><code>// Request
+{ "type": "teams|email", "recipients": ["team@example.com"], "subject": "Alert", "message": "...", "app_name": "Morgan Money" }
+
+// Response
+{ "status": "sent", "type": "email", "recipients": [...], "message_preview": "..." }</code></pre>
+
+<hr>
+
+<!-- ── Mock Data ── -->
+<h2 id="mock-data">Mock Data Implementation</h2>
+
+<h3>Data Sources (Backend)</h3>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Source</th><th>File</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>APPS_REGISTRY</code></td><td>app/mock_data/apps_registry.py</td><td>81 applications with business metadata + operational fields</td></tr>
+    <tr><td><code>NODES</code></td><td>app/mock_data/graph_data.py</td><td>90+ component service nodes</td></tr>
+    <tr><td><code>EDGES_RAW</code></td><td>app/mock_data/graph_data.py</td><td>100+ component dependency edges</td></tr>
+    <tr><td><code>SEAL_COMPONENTS</code></td><td>app/mock_data/graph_data.py</td><td>SEAL ID &rarr; component IDs (10 SEALs)</td></tr>
+    <tr><td><code>INDICATOR_NODES</code></td><td>app/mock_data/graph_data.py</td><td>869 health indicators</td></tr>
+    <tr><td><code>PLATFORM_NODES</code></td><td>app/mock_data/graph_data.py</td><td>10 platform nodes (GAP, GKP, ECS, EKS)</td></tr>
+    <tr><td><code>DATA_CENTER_NODES</code></td><td>app/mock_data/graph_data.py</td><td>6 data center nodes (NA, EMEA, APAC)</td></tr>
+    <tr><td><code>APP_SLO_DATA</code></td><td>app/mock_data/slo_data.py</td><td>SLO targets/actuals for 26 apps</td></tr>
+    <tr><td><code>INCIDENT_TRENDS</code></td><td>app/mock_data/dashboard_data.py</td><td>13-week P1/P2 trend data</td></tr>
+    <tr><td><code>_AURA_SCENARIOS</code></td><td>app/mock_data/aura_data.py</td><td>11 keyword-matched chat scenarios</td></tr>
+    <tr><td><code>TEAMS</code></td><td>app/mock_data/teams_data.py</td><td>48 teams with role-based members</td></tr>
+    <tr><td><code>DIRECTORY_ENTRIES</code></td><td>app/mock_data/directory_data.py</td><td>200 corporate directory entries</td></tr>
+    <tr><td>Outcome Measures</td><td>app/mock_data/outcome_measures_data.py</td><td>Per-SEAL metrics (5 sections, 12-month trends)</td></tr>
+    <tr><td>Essential Services</td><td>app/mock_data/essential_services_data.py</td><td>15 ES definitions, SEAL mappings, 12 business processes</td></tr>
+    <tr><td>Situation Room</td><td>app/mock_data/situation_room_data.py</td><td>Systems, situations, overrides</td></tr>
+    <tr><td>VC Notifications</td><td>app/services/vc_monitor.py</td><td>In-memory notification rules and email templates</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Endpoint &rarr; Mock Data Mapping</h3>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Endpoint</th><th>Mock Source</th><th>Replace With</th></tr></thead>
+  <tbody>
+    <tr><td><code>/api/health-summary</code></td><td>Enriched apps + APPS_REGISTRY</td><td>Unified Reporting API + enriched status</td></tr>
+    <tr><td><code>/api/ai-analysis</code></td><td>Hardcoded text from filter scope</td><td>AURA AI streaming API</td></tr>
+    <tr><td><code>/api/regional-status</code></td><td>Enriched apps grouped by region</td><td>Same logic with live status data</td></tr>
+    <tr><td><code>/api/critical-apps</code></td><td>Enriched apps where status == critical</td><td>Same filter with live status + incidents</td></tr>
+    <tr><td><code>/api/incident-trends</code></td><td>Static INCIDENT_TRENDS, scaled by scope</td><td>Unified Reporting API by week</td></tr>
+    <tr><td><code>/api/applications/enriched</code></td><td>Full enrichment pipeline</td><td>V12 + ERMA + Knowledge Graph + Unified Reporting</td></tr>
+    <tr><td><code>/api/graph/*</code></td><td>NODES, EDGES_RAW, INDICATORS</td><td>V12/ERMA + Knowledge Graph</td></tr>
+    <tr><td><code>/api/aura/chat</code></td><td>Keyword-matched scenario responses</td><td>AURA AI streaming API</td></tr>
+    <tr><td><code>/api/teams</code></td><td>In-memory 48 teams</td><td>V12 (roles tied to App contacts)</td></tr>
+    <tr><td><code>/api/outcome-measures/*</code></td><td>Deterministic per-SEAL metrics</td><td>Metrics database / data lake</td></tr>
+    <tr><td><code>/api/essential-services/*</code></td><td>15 ES with curated SEAL mappings</td><td>ES Mapping API + enriched status</td></tr>
+    <tr><td><code>/api/situation-room/*</code></td><td>In-memory situations/systems</td><td>Unified Reporting major incident API</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Developer Guide: Replacing Mock Data</h3>
+<ol>
+  <li><strong>Keep the same response schemas</strong> &mdash; the frontend depends on exact field names and shapes</li>
+  <li><strong>Add environment variables</strong> for external service URLs and credentials</li>
+  <li><strong>Replace data sources one at a time</strong> &mdash; start with APPS_REGISTRY (V12), then incidents (Unified Reporting), then graph (ERMA/V12)</li>
+  <li><strong>Cache expensive computations</strong> &mdash; maintain a caching strategy with TTL for live data</li>
+  <li><strong>Filter logic stays the same</strong> &mdash; works on any array of app objects matching the schema</li>
+  <li><strong>Test with mock data first</strong> &mdash; verify frontend behavior, then swap in live API calls</li>
+</ol>
+
+</body>
+</html>
