@@ -4,556 +4,567 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>UOP Architecture Guide</title>
-<style>
-  :root {
-    --bg: #ffffff; --bg-alt: #f8f9fb; --bg-code: #f1f3f5;
-    --border: #e0e3e8; --border-light: #ebedf0;
-    --text: #1a1d23; --text-muted: #5a6270;
-    --accent: #3b82f6; --accent-light: #dbeafe;
-    --green: #16a34a; --green-bg: #dcfce7;
-    --amber: #d97706; --amber-bg: #fef3c7;
-    --red: #dc2626; --red-bg: #fee2e2;
-    --purple: #7c3aed; --purple-bg: #ede9fe;
-    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace;
-    --radius: 8px;
-    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: var(--font); color: var(--text); background: var(--bg);
-    line-height: 1.65; font-size: 15px; max-width: 960px; margin: 0 auto; padding: 32px 40px 80px;
-  }
-  h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
-  h1 small { display: block; font-size: 14px; font-weight: 400; color: var(--text-muted); margin-top: 4px; }
-  h2 { font-size: 20px; font-weight: 700; margin: 48px 0 16px; padding-bottom: 10px; border-bottom: 2px solid var(--border); }
-  h3 { font-size: 16px; font-weight: 600; margin: 28px 0 12px; }
-  h4 { font-size: 14px; font-weight: 600; margin: 20px 0 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-  p { margin-bottom: 12px; }
-  ul, ol { margin: 0 0 12px 24px; }
-  li { margin-bottom: 4px; }
-  a { color: var(--accent); }
-  hr { border: none; border-top: 1px solid var(--border-light); margin: 32px 0; }
-  code { font-family: var(--mono); font-size: 12px; background: var(--bg-code); padding: 2px 6px; border-radius: 4px; }
-  pre { background: var(--bg-code); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 16px 20px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.6; margin: 12px 0 16px; }
-  pre code { background: none; padding: 0; }
-
-  .card { background: var(--bg); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow); }
-  .card.accent-left { border-left: 4px solid var(--accent); }
-  .card.accent-green { border-left: 4px solid var(--green); }
-  .card.accent-purple { border-left: 4px solid var(--purple); }
-  .card.accent-amber { border-left: 4px solid var(--amber); }
-  .card.accent-red { border-left: 4px solid var(--red); }
-
-  .cap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin: 16px 0; }
-  .cap-card { background: var(--bg); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 14px 16px; }
-  .cap-card:hover { box-shadow: var(--shadow-md); border-color: var(--accent); }
-  .cap-card strong { font-size: 13px; display: block; margin-bottom: 4px; }
-  .cap-card span { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
-
-  .table-wrap { overflow-x: auto; margin: 16px 0; border: 1px solid var(--border-light); border-radius: var(--radius); box-shadow: var(--shadow); }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  thead th { background: var(--bg-alt); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); padding: 10px 14px; text-align: left; border-bottom: 2px solid var(--border); }
-  tbody td { padding: 10px 14px; border-bottom: 1px solid var(--border-light); vertical-align: top; }
-  tbody tr:last-child td { border-bottom: none; }
-  tbody tr:hover { background: var(--accent-light); }
-  tbody tr:nth-child(even) { background: var(--bg-alt); }
-  tbody tr:nth-child(even):hover { background: var(--accent-light); }
-
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; margin: 1px 2px; }
-  .badge-blue { background: var(--accent-light); color: #1d4ed8; }
-  .badge-green { background: var(--green-bg); color: #15803d; }
-  .badge-amber { background: var(--amber-bg); color: #92400e; }
-  .badge-red { background: var(--red-bg); color: #991b1b; }
-  .badge-purple { background: var(--purple-bg); color: #5b21b6; }
-
-  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
-  .status::before { content: ''; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .status-green::before { background: var(--green); }
-  .status-amber::before { background: var(--amber); }
-  .status-red::before { background: var(--red); }
-  .status-gray::before { background: #9ca3af; }
-
-  .callout { display: flex; gap: 12px; padding: 14px 16px; border-radius: var(--radius); margin: 16px 0; font-size: 13px; line-height: 1.5; }
-  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
-  .callout-info { background: var(--accent-light); border: 1px solid #93c5fd; }
-  .callout-warn { background: var(--amber-bg); border: 1px solid #fcd34d; }
-  .callout-critical { background: var(--red-bg); border: 1px solid #fca5a5; }
-
-  .diagram-flow { display: flex; align-items: stretch; gap: 0; margin: 20px 0; flex-wrap: wrap; justify-content: center; }
-  .diagram-flow .box { background: var(--bg); border: 2px solid var(--accent); border-radius: var(--radius); padding: 12px 18px; text-align: center; min-width: 130px; }
-  .diagram-flow .box strong { display: block; font-size: 13px; margin-bottom: 2px; }
-  .diagram-flow .box .sub { font-size: 11px; color: var(--text-muted); }
-  .diagram-flow .arrow { display: flex; align-items: center; justify-content: center; padding: 0 6px; color: var(--accent); font-size: 22px; font-weight: bold; min-width: 30px; }
-  .diagram-flow .box.muted { border-color: var(--border); }
-  .diagram-flow .box.green { border-color: var(--green); }
-  .diagram-flow .box.amber { border-color: var(--amber); }
-  .diagram-flow .box.red { border-color: var(--red); }
-  .diagram-flow .box.purple { border-color: var(--purple); }
-
-  .diagram-stacks { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: start; margin: 20px 0; }
-  .diagram-stacks .stack { border: 2px solid var(--accent); border-radius: var(--radius); overflow: hidden; }
-  .diagram-stacks .stack-title { background: var(--accent); color: white; padding: 8px 14px; font-size: 13px; font-weight: 700; text-align: center; }
-  .diagram-stacks .stack-item { padding: 8px 14px; border-bottom: 1px solid var(--border-light); font-size: 12px; }
-  .diagram-stacks .stack-item:last-child { border-bottom: none; }
-  .diagram-stacks .stack-connector { display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--accent); font-weight: bold; padding-top: 30px; }
-
-  .graph-diagram { display: grid; grid-template-areas: ". indicators ." "upstream components downstream" ". platform ." ". datacenter ."; grid-template-columns: 1fr 1.4fr 1fr; gap: 8px; margin: 20px 0; align-items: center; justify-items: center; }
-  .graph-diagram .gbox { border: 2px solid var(--accent); border-radius: var(--radius); padding: 10px 14px; text-align: center; width: 100%; max-width: 220px; background: var(--bg); }
-  .graph-diagram .gbox strong { font-size: 12px; display: block; }
-  .graph-diagram .gbox .sub { font-size: 11px; color: var(--text-muted); }
-  .graph-diagram .gbox.ind { grid-area: indicators; border-color: var(--green); }
-  .graph-diagram .gbox.up { grid-area: upstream; border-color: var(--text-muted); }
-  .graph-diagram .gbox.comp { grid-area: components; border-color: var(--accent); }
-  .graph-diagram .gbox.down { grid-area: downstream; border-color: var(--text-muted); }
-  .graph-diagram .gbox.plat { grid-area: platform; border-color: var(--amber); }
-  .graph-diagram .gbox.dc { grid-area: datacenter; border-color: var(--purple); }
-
-  .hierarchy { padding: 16px 20px; margin: 12px 0; background: var(--bg); border: 1px solid var(--border-light); border-radius: var(--radius); font-size: 14px; line-height: 1.8; }
-  .hierarchy .level { padding-left: 28px; border-left: 2px solid var(--border); margin-left: 6px; }
-
-  .metric-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 16px 0; }
-  .metric { background: var(--bg); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 14px 16px; text-align: center; }
-  .metric .value { font-size: 24px; font-weight: 800; color: var(--accent); }
-  .metric .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-top: 4px; }
-
-  @media print { body { padding: 20px; } .card, .table-wrap { box-shadow: none; break-inside: avoid; } tbody tr:hover { background: inherit; } }
-</style>
 </head>
-<body>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1d23;line-height:1.65;font-size:15px;max-width:960px;margin:0 auto;padding:32px 40px 80px">
 
-<h1>
+<h1 style="font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px">
   Unified Observability Portal (UOP)
-  <small>Architecture Guide &mdash; High-level system design and integration overview</small>
+  <small style="display:block;font-size:14px;font-weight:400;color:#5a6270;margin-top:4px">Architecture Guide &mdash; High-level system design and integration overview</small>
 </h1>
 
-<p style="margin-bottom:24px; color:var(--text-muted); font-size:13px;">
+<p style="margin-bottom:24px;color:#5a6270;font-size:13px">
   Detailed API specs:
-  <a href="API-CURRENT.html">API-CURRENT</a> &mdash; endpoint reference &nbsp;|&nbsp;
-  <a href="API_DATA.html">API_DATA</a> &mdash; schemas &amp; payloads &nbsp;|&nbsp;
-  <a href="OUTCOME-MEASURES.html">OUTCOME-MEASURES</a> &mdash; SRE metrics
+  <a style="color:#3b82f6" href="API-CURRENT.html">API-CURRENT</a> &mdash; endpoint reference &nbsp;|&nbsp;
+  <a style="color:#3b82f6" href="API_DATA.html">API_DATA</a> &mdash; schemas &amp; payloads &nbsp;|&nbsp;
+  <a style="color:#3b82f6" href="OUTCOME-MEASURES.html">OUTCOME-MEASURES</a> &mdash; SRE metrics
 </p>
 
-<hr>
+<hr style="border:none;border-top:1px solid #ebedf0;margin:32px 0">
 
-<!-- ── 1. Overview ── -->
-<h2>1. Overview</h2>
+<!-- 1. Overview -->
+<h2 style="font-size:20px;font-weight:700;margin:48px 0 16px;padding-bottom:10px;border-bottom:2px solid #e0e3e8">1. Overview</h2>
 
-<div class="card accent-left">
-  <h3 style="margin-top:0">Current State</h3>
-  <p>Two repositories: <strong>uop-api</strong> (FastAPI backend) and <strong>uop-ui</strong> (React frontend). Backend currently uses <strong>mock data</strong> &mdash; all contracts are designed for live integration replacement.</p>
+<div style="background:#ffffff;border:1px solid #ebedf0;border-radius:8px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);border-left:4px solid #3b82f6">
+  <h3 style="font-size:16px;font-weight:600;margin:0 0 12px">Current State</h3>
+  <p style="margin-bottom:12px">Two repositories: <strong>uop-api</strong> (FastAPI backend) and <strong>uop-ui</strong> (React frontend). Backend currently uses <strong>mock data</strong> &mdash; all contracts are designed for live integration replacement.</p>
 </div>
 
-<h3>Key Capabilities</h3>
+<h3 style="font-size:16px;font-weight:600;margin:28px 0 12px">Key Capabilities</h3>
 
-<div class="cap-grid">
-  <div class="cap-card"><strong>Executive Overview</strong><span>AI-driven summary, live health status, context-driven measures</span></div>
-  <div class="cap-card"><strong>AURA AI Assistant</strong><span>Smart prompts, rich visual responses, context-aware analysis</span></div>
-  <div class="cap-card"><strong>Blast Radius</strong><span>Trace upstream/downstream impacts across apps, deployments, platforms</span></div>
-  <div class="cap-card"><strong>Applications</strong><span>Hierarchical views, business/tech tree navigation, status filtering</span></div>
-  <div class="cap-card"><strong>Incident Zero</strong><span>Proactive pre-incident management &mdash; burn rates, error budgets, breach ETAs</span></div>
-  <div class="cap-card"><strong>Multi-Tenant Portal</strong><span>Branded portal instances with custom logos, titles, scope filters</span></div>
-  <div class="cap-card"><strong>View Central</strong><span>Drag-and-drop widgets, real-time notifications, personalized dashboards</span></div>
-  <div class="cap-card"><strong>Customer Journeys</strong><span>End-to-end path health across service hops</span></div>
-  <div class="cap-card"><strong>SLO Agent</strong><span>Predicts breaches, tracks error budgets, proposes remediation</span></div>
-  <div class="cap-card"><strong>Announcements</strong><span>Create, manage, broadcast platform announcements</span></div>
-  <div class="cap-card"><strong>Teams Management</strong><span>Role-based member assignments and directory search</span></div>
-  <div class="cap-card"><strong>Outcome Measures</strong><span>SRE metrics &mdash; 12-month trends, baselines, CTO/CBT leaderboards</span></div>
-  <div class="cap-card"><strong>Essential Services</strong><span>15 business-critical services &mdash; risk heatmap, dependency visualization</span></div>
-  <div class="cap-card"><strong>Situation Room</strong><span>Major incident management with system-level health tracking</span></div>
-</div>
-
-<hr>
-
-<!-- ── 2. Architecture ── -->
-<h2>2. Architecture</h2>
-
-<h3>System Components</h3>
-
-<div class="diagram-stacks">
-  <div class="stack">
-    <div class="stack-title">uop-ui (React + Vite)</div>
-    <div class="stack-item"><strong>ScopeBar</strong> &mdash; Filter controls</div>
-    <div class="stack-item"><strong>Dashboard Pages</strong> &mdash; All page views</div>
-    <div class="stack-item"><strong>View Central Widgets</strong> &mdash; Drag-drop layout</div>
-    <div class="stack-item"><strong>FilterContext</strong> &mdash; buildFilterQueryString()</div>
-    <div class="stack-item"><strong>/api/*</strong> &mdash; Vite proxy in dev, env-config in prod</div>
-  </div>
-  <div class="stack-connector">&#8594;</div>
-  <div class="stack">
-    <div class="stack-title">uop-api (FastAPI + Uvicorn)</div>
-    <div class="stack-item"><strong>Routers</strong> &mdash; 11 endpoint modules</div>
-    <div class="stack-item"><strong>Services</strong> &mdash; enrichment, graph_engine, email</div>
-    <div class="stack-item"><strong>Mock Data</strong> &mdash; apps_registry, graph_data, teams_data</div>
-    <div class="stack-item"><strong>Pipeline</strong> &mdash; Indicator &rarr; Component &rarr; Deployment &rarr; App</div>
-  </div>
-</div>
-
-<h3>Data Flow</h3>
-<ol>
-  <li><strong>Frontend APPS</strong>: 81 applications with business metadata for filter cascading and tree navigation</li>
-  <li><strong>Backend APPS_REGISTRY</strong>: Same 81 apps with operational fields (incidents, region)</li>
-  <li><strong>Backend Enrichment</strong>: Computes health status bottom-up, attaches deployments, SLO metrics</li>
-  <li><strong>API Filtering</strong>: All endpoints accept filter query params and return scoped data</li>
-  <li><strong>Frontend Rendering</strong>: Pages fetch filtered data, render with scoped context, sync state to URL</li>
-</ol>
-
-<h3>Single Source of Truth</h3>
-
-<div class="table-wrap">
-<table>
-  <thead><tr><th>Data Domain</th><th>Current Source</th><th>Target Live Source</th></tr></thead>
+<table style="width:100%;border-collapse:collapse;margin:16px 0">
   <tbody>
-    <tr><td><strong>Applications &amp; Deployments</strong></td><td>APPS_REGISTRY + APPS</td><td><span class="badge badge-blue">V12</span></td></tr>
-    <tr><td><strong>Technology Hierarchy</strong> <span style="color:var(--text-muted);font-size:12px;">(LOB &rarr; CTO &rarr; CBT)</span></td><td>Hardcoded in registries</td><td><span class="badge badge-blue">V12</span></td></tr>
-    <tr><td><strong>Knowledge Graph</strong> <span style="color:var(--text-muted);font-size:12px;">(dependencies)</span></td><td>NODES, EDGES_RAW</td><td><span class="badge badge-blue">V12</span> <span class="badge badge-purple">ERMA</span></td></tr>
-    <tr><td><strong>Platforms &amp; Data Centers</strong></td><td>PLATFORM_NODES</td><td><span class="badge badge-green">Knowledge Graph</span></td></tr>
-    <tr><td><strong>Health Indicators</strong> <span style="color:var(--text-muted);font-size:12px;">(nodes for RAG)</span></td><td>INDICATOR_NODES</td><td><span class="badge badge-green">Knowledge Graph</span></td></tr>
-    <tr><td><strong>Incidents</strong> <span style="color:var(--text-muted);font-size:12px;">(P1/P2, trends, MTTR)</span></td><td>INCIDENT_TRENDS</td><td><span class="badge badge-amber">Unified Reporting API</span></td></tr>
-    <tr><td><strong>SLO Targets &amp; Actuals</strong></td><td>APP_SLO_DATA</td><td><span class="badge badge-red">Service Status</span> <span class="badge badge-purple">GEM/Cortex</span></td></tr>
-    <tr><td><strong>Teams</strong> <span style="color:var(--text-muted);font-size:12px;">(roles tied to App contacts, incl. SRE)</span></td><td>TEAMS, DIRECTORY</td><td><span class="badge badge-blue">V12</span></td></tr>
+    <tr>
+      <td style="padding:14px 16px;border:1px solid #ebedf0;border-radius:8px;vertical-align:top;width:50%">
+        <strong style="font-size:13px;display:block;margin-bottom:4px">Executive Overview</strong>
+        <span style="font-size:12px;color:#5a6270;line-height:1.5">AI-driven summary, live health status, context-driven measures</span>
+      </td>
+      <td style="padding:14px 16px;border:1px solid #ebedf0;border-radius:8px;vertical-align:top;width:50%">
+        <strong style="font-size:13px;display:block;margin-bottom:4px">AURA AI Assistant</strong>
+        <span style="font-size:12px;color:#5a6270;line-height:1.5">Smart prompts, rich visual responses, context-aware analysis</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:14px 16px;border:1px solid #ebedf0;border-radius:8px;vertical-align:top">
+        <strong style="font-size:13px;display:block;margin-bottom:4px">Blast Radius</strong>
+        <span style="font-size:12px;color:#5a6270;line-height:1.5">Trace upstream/downstream impacts across apps, deployments, platforms</span>
+      </td>
+      <td style="padding:14px 16px;border:1px solid #ebedf0;border-radius:8px;vertical-align:top">
+        <strong style="font-size:13px;display:block;margin-bottom:4px">Applications</strong>
+        <span style="font-size:12px;color:#5a6270;line-height:1.5">Hierarchical views, business/tech tree navigation, status filtering</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:14px 16px;border:1px solid #ebedf0;border-radius:8px;vertical-align:top">
+        <strong style="font-size:13px;display:block;margin-bottom:4px">Incident Zero</strong>
+        <span style="font-size:12px;color:#5a6270;line-height:1.5">Proactive pre-incident management &mdash; burn rates, error budgets, breach ETAs</span>
+      </td>
+      <td style="padding:14px 16px;border:1px solid #ebedf0;border-radius:8px;vertical-align:top">
+        <strong style="font-size:13px;display:block;margin-bottom:4px">Multi-Tenant Portal</strong>
+        <span style="font-size:12px;color:#5a6270;line-height:1.5">Branded portal instances with custom logos, titles, scope filters</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:14px 16px;border:1px solid #ebedf0;border-radius:8px;vertical-align:top">
+        <strong style="font-size:13px;display:block;margin-bottom:4px">View Central</strong>
+        <span style="font-size:12px;color:#5a6270;line-height:1.5">Drag-and-drop widgets, real-time notifications, personalized dashboards</span>
+      </td>
+      <td style="padding:14px 16px;border:1px solid #ebedf0;border-radius:8px;vertical-align:top">
+        <strong style="font-size:13px;display:block;margin-bottom:4px">Customer Journeys</strong>
+        <span style="font-size:12px;color:#5a6270;line-height:1.5">End-to-end path health across service hops</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:14px 16px;border:1px solid #ebedf0;border-radius:8px;vertical-align:top">
+        <strong style="font-size:13px;display:block;margin-bottom:4px">SLO Agent</strong>
+        <span style="font-size:12px;color:#5a6270;line-height:1.5">Predicts breaches, tracks error budgets, proposes remediation</span>
+      </td>
+      <td style="padding:14px 16px;border:1px solid #ebedf0;border-radius:8px;vertical-align:top">
+        <strong style="font-size:13px;display:block;margin-bottom:4px">Announcements</strong>
+        <span style="font-size:12px;color:#5a6270;line-height:1.5">Create, manage, broadcast platform announcements</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:14px 16px;border:1px solid #ebedf0;border-radius:8px;vertical-align:top">
+        <strong style="font-size:13px;display:block;margin-bottom:4px">Teams Management</strong>
+        <span style="font-size:12px;color:#5a6270;line-height:1.5">Role-based member assignments and directory search</span>
+      </td>
+      <td style="padding:14px 16px;border:1px solid #ebedf0;border-radius:8px;vertical-align:top">
+        <strong style="font-size:13px;display:block;margin-bottom:4px">Outcome Measures</strong>
+        <span style="font-size:12px;color:#5a6270;line-height:1.5">SRE metrics &mdash; 12-month trends, baselines, CTO/CBT leaderboards</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:14px 16px;border:1px solid #ebedf0;border-radius:8px;vertical-align:top">
+        <strong style="font-size:13px;display:block;margin-bottom:4px">Essential Services</strong>
+        <span style="font-size:12px;color:#5a6270;line-height:1.5">15 business-critical services &mdash; risk heatmap, dependency visualization</span>
+      </td>
+      <td style="padding:14px 16px;border:1px solid #ebedf0;border-radius:8px;vertical-align:top">
+        <strong style="font-size:13px;display:block;margin-bottom:4px">Situation Room</strong>
+        <span style="font-size:12px;color:#5a6270;line-height:1.5">Major incident management with system-level health tracking</span>
+      </td>
+    </tr>
   </tbody>
 </table>
+
+<hr style="border:none;border-top:1px solid #ebedf0;margin:32px 0">
+
+<!-- 2. Architecture -->
+<h2 style="font-size:20px;font-weight:700;margin:48px 0 16px;padding-bottom:10px;border-bottom:2px solid #e0e3e8">2. Architecture</h2>
+
+<h3 style="font-size:16px;font-weight:600;margin:28px 0 12px">System Components</h3>
+
+<table style="width:100%;border-collapse:collapse;margin:20px 0">
+  <tbody>
+    <tr>
+      <td style="vertical-align:top;width:45%;padding:0">
+        <table style="width:100%;border-collapse:collapse;border:2px solid #3b82f6;border-radius:8px">
+          <tr><td style="background:#3b82f6;color:white;padding:8px 14px;font-size:13px;font-weight:700;text-align:center">uop-ui (React + Vite)</td></tr>
+          <tr><td style="padding:8px 14px;border-bottom:1px solid #ebedf0;font-size:12px"><strong>ScopeBar</strong> &mdash; Filter controls</td></tr>
+          <tr><td style="padding:8px 14px;border-bottom:1px solid #ebedf0;font-size:12px"><strong>Dashboard Pages</strong> &mdash; All page views</td></tr>
+          <tr><td style="padding:8px 14px;border-bottom:1px solid #ebedf0;font-size:12px"><strong>View Central Widgets</strong> &mdash; Drag-drop layout</td></tr>
+          <tr><td style="padding:8px 14px;border-bottom:1px solid #ebedf0;font-size:12px"><strong>FilterContext</strong> &mdash; buildFilterQueryString()</td></tr>
+          <tr><td style="padding:8px 14px;font-size:12px"><strong>/api/*</strong> &mdash; Vite proxy in dev, env-config in prod</td></tr>
+        </table>
+      </td>
+      <td style="text-align:center;font-size:22px;font-weight:bold;color:#3b82f6;padding:0 6px;vertical-align:middle;width:10%">&#8594;</td>
+      <td style="vertical-align:top;width:45%;padding:0">
+        <table style="width:100%;border-collapse:collapse;border:2px solid #3b82f6;border-radius:8px">
+          <tr><td style="background:#3b82f6;color:white;padding:8px 14px;font-size:13px;font-weight:700;text-align:center">uop-api (FastAPI + Uvicorn)</td></tr>
+          <tr><td style="padding:8px 14px;border-bottom:1px solid #ebedf0;font-size:12px"><strong>Routers</strong> &mdash; 11 endpoint modules</td></tr>
+          <tr><td style="padding:8px 14px;border-bottom:1px solid #ebedf0;font-size:12px"><strong>Services</strong> &mdash; enrichment, graph_engine, email</td></tr>
+          <tr><td style="padding:8px 14px;border-bottom:1px solid #ebedf0;font-size:12px"><strong>Mock Data</strong> &mdash; apps_registry, graph_data, teams_data</td></tr>
+          <tr><td style="padding:8px 14px;font-size:12px"><strong>Pipeline</strong> &mdash; Indicator &rarr; Component &rarr; Deployment &rarr; App</td></tr>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 style="font-size:16px;font-weight:600;margin:28px 0 12px">Data Flow</h3>
+<ol style="margin:0 0 12px 24px">
+  <li style="margin-bottom:4px"><strong>Frontend APPS</strong>: 81 applications with business metadata for filter cascading and tree navigation</li>
+  <li style="margin-bottom:4px"><strong>Backend APPS_REGISTRY</strong>: Same 81 apps with operational fields (incidents, region)</li>
+  <li style="margin-bottom:4px"><strong>Backend Enrichment</strong>: Computes health status bottom-up, attaches deployments, SLO metrics</li>
+  <li style="margin-bottom:4px"><strong>API Filtering</strong>: All endpoints accept filter query params and return scoped data</li>
+  <li style="margin-bottom:4px"><strong>Frontend Rendering</strong>: Pages fetch filtered data, render with scoped context, sync state to URL</li>
+</ol>
+
+<h3 style="font-size:16px;font-weight:600;margin:28px 0 12px">Single Source of Truth</h3>
+
+<table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #ebedf0;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)">
+  <thead><tr><th style="background:#f8f9fb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:#5a6270;padding:10px 14px;text-align:left;border-bottom:2px solid #e0e3e8">Data Domain</th><th style="background:#f8f9fb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:#5a6270;padding:10px 14px;text-align:left;border-bottom:2px solid #e0e3e8">Current Source</th><th style="background:#f8f9fb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:#5a6270;padding:10px 14px;text-align:left;border-bottom:2px solid #e0e3e8">Target Live Source</th></tr></thead>
+  <tbody>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><strong>Applications &amp; Deployments</strong></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">APPS_REGISTRY + APPS</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dbeafe;color:#1d4ed8">V12</span></td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><strong>Technology Hierarchy</strong> <span style="color:#5a6270;font-size:12px">(LOB &rarr; CTO &rarr; CBT)</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Hardcoded in registries</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dbeafe;color:#1d4ed8">V12</span></td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><strong>Knowledge Graph</strong> <span style="color:#5a6270;font-size:12px">(dependencies)</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">NODES, EDGES_RAW</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dbeafe;color:#1d4ed8">V12</span> <span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#ede9fe;color:#5b21b6">ERMA</span></td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><strong>Platforms &amp; Data Centers</strong></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">PLATFORM_NODES</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dcfce7;color:#15803d">Knowledge Graph</span></td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><strong>Health Indicators</strong> <span style="color:#5a6270;font-size:12px">(nodes for RAG)</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">INDICATOR_NODES</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dcfce7;color:#15803d">Knowledge Graph</span></td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><strong>Incidents</strong> <span style="color:#5a6270;font-size:12px">(P1/P2, trends, MTTR)</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">INCIDENT_TRENDS</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#fef3c7;color:#92400e">Unified Reporting API</span></td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><strong>SLO Targets &amp; Actuals</strong></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">APP_SLO_DATA</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#fee2e2;color:#991b1b">Service Status</span> <span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#ede9fe;color:#5b21b6">GEM/Cortex</span></td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><strong>Teams</strong> <span style="color:#5a6270;font-size:12px">(roles tied to App contacts, incl. SRE)</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">TEAMS, DIRECTORY</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dbeafe;color:#1d4ed8">V12</span></td></tr>
+  </tbody>
+</table>
+
+<div style="display:table;width:100%;gap:12px;padding:14px 16px;border-radius:8px;margin:16px 0;font-size:13px;line-height:1.5;background:#fee2e2;border:1px solid #fca5a5">
+  <span style="font-size:18px;margin-right:12px;vertical-align:top">&#9888;</span>
+  <span><strong>Critical:</strong> In production, APPS (frontend) and APPS_REGISTRY (backend) must be replaced by a single API call to V12. The dual-source pattern exists only for mock data.</span>
 </div>
 
-<div class="callout callout-critical">
-  <span class="callout-icon">&#9888;</span>
-  <div><strong>Critical:</strong> In production, APPS (frontend) and APPS_REGISTRY (backend) must be replaced by a single API call to V12. The dual-source pattern exists only for mock data.</div>
-</div>
+<hr style="border:none;border-top:1px solid #ebedf0;margin:32px 0">
 
-<hr>
+<!-- 3. Data Model -->
+<h2 style="font-size:20px;font-weight:700;margin:48px 0 16px;padding-bottom:10px;border-bottom:2px solid #e0e3e8">3. Data Model &amp; Hierarchies</h2>
 
-<!-- ── 3. Data Model ── -->
-<h2>3. Data Model &amp; Hierarchies</h2>
-
-<h3>3.1 Business Hierarchy</h3>
-<div class="hierarchy">
+<h3 style="font-size:16px;font-weight:600;margin:28px 0 12px">3.1 Business Hierarchy</h3>
+<div style="padding:16px 20px;margin:12px 0;background:#ffffff;border:1px solid #ebedf0;border-radius:8px;font-size:14px;line-height:1.8">
   <strong>LOB</strong> (Line of Business)
-  <div class="level"><strong>Sub-LOB</strong> (may not exist &mdash; skip when empty)
-    <div class="level"><strong>Product Line</strong>
-      <div class="level"><strong>Product</strong>
-        <div class="level"><strong>Application</strong> (identified by SEAL ID)</div>
+  <div style="padding-left:28px;border-left:2px solid #e0e3e8;margin-left:6px"><strong>Sub-LOB</strong> (may not exist &mdash; skip when empty)
+    <div style="padding-left:28px;border-left:2px solid #e0e3e8;margin-left:6px"><strong>Product Line</strong>
+      <div style="padding-left:28px;border-left:2px solid #e0e3e8;margin-left:6px"><strong>Product</strong>
+        <div style="padding-left:28px;border-left:2px solid #e0e3e8;margin-left:6px"><strong>Application</strong> (identified by SEAL ID)</div>
       </div>
     </div>
   </div>
 </div>
-<p><strong>Current LOBs:</strong> AWM, CCB, CDAO, CIB, CT, EP, IP</p>
+<p style="margin-bottom:12px"><strong>Current LOBs:</strong> AWM, CCB, CDAO, CIB, CT, EP, IP</p>
 
-<h3>3.2 Technology Hierarchy</h3>
-<div class="hierarchy">
+<h3 style="font-size:16px;font-weight:600;margin:28px 0 12px">3.2 Technology Hierarchy</h3>
+<div style="padding:16px 20px;margin:12px 0;background:#ffffff;border:1px solid #ebedf0;border-radius:8px;font-size:14px;line-height:1.8">
   <strong>LOB</strong> (Line of Business)
-  <div class="level"><strong>CTO</strong> (Chief Technology Officer)
-    <div class="level"><strong>CBT</strong> (Component Business Team)
-      <div class="level"><strong>Application</strong> (identified by SEAL ID)</div>
+  <div style="padding-left:28px;border-left:2px solid #e0e3e8;margin-left:6px"><strong>CTO</strong> (Chief Technology Officer)
+    <div style="padding-left:28px;border-left:2px solid #e0e3e8;margin-left:6px"><strong>CBT</strong> (Component Business Team)
+      <div style="padding-left:28px;border-left:2px solid #e0e3e8;margin-left:6px"><strong>Application</strong> (identified by SEAL ID)</div>
     </div>
   </div>
 </div>
 
-<p style="color:var(--text-muted); font-size:13px;">Full application schema details are in <a href="API_DATA.html">API_DATA</a>.</p>
+<p style="color:#5a6270;font-size:13px;margin-bottom:12px">Full application schema details are in <a style="color:#3b82f6" href="API_DATA.html">API_DATA</a>.</p>
 
-<hr>
+<hr style="border:none;border-top:1px solid #ebedf0;margin:32px 0">
 
-<!-- ── 4. Health Status Propagation ── -->
-<h2>4. Health Status Propagation</h2>
+<!-- 4. Health Status Propagation -->
+<h2 style="font-size:20px;font-weight:700;margin:48px 0 16px;padding-bottom:10px;border-bottom:2px solid #e0e3e8">4. Health Status Propagation</h2>
 
-<p>Health status flows bottom-up through the hierarchy:</p>
+<p style="margin-bottom:12px">Health status flows bottom-up through the hierarchy:</p>
 
-<div class="diagram-flow">
-  <div class="box green"><strong>Health Indicator</strong><div class="sub">green / amber / red</div></div>
-  <div class="arrow">&rarr;</div>
-  <div class="box amber"><strong>Component</strong><div class="sub">BFS dependency traversal</div></div>
-  <div class="arrow">&rarr;</div>
-  <div class="box red"><strong>Deployment</strong><div class="sub">worst of components</div></div>
-  <div class="arrow">&rarr;</div>
-  <div class="box purple"><strong>Application</strong><div class="sub">worst of deployments</div></div>
-</div>
-
-<div class="table-wrap">
-<table>
-  <thead><tr><th>Layer</th><th>Values</th><th>Ranking (lower = worse)</th></tr></thead>
+<table style="width:100%;border-collapse:collapse;margin:20px 0">
   <tbody>
     <tr>
-      <td>Indicator</td>
-      <td><span class="status status-green">green</span> &nbsp; <span class="status status-amber">amber</span> &nbsp; <span class="status status-red">red</span></td>
-      <td>red (0), amber (1), green (2)</td>
-    </tr>
-    <tr>
-      <td>Component / Deployment / App</td>
-      <td><span class="status status-red">critical</span> &nbsp; <span class="status status-amber">warning</span> &nbsp; <span class="status status-green">healthy</span> &nbsp; <span class="status status-gray">no_data</span></td>
-      <td>critical (0), warning (1), healthy (2), no_data (3)</td>
+      <td style="border:2px solid #16a34a;border-radius:8px;padding:12px 18px;text-align:center;vertical-align:middle"><strong style="display:block;font-size:13px;margin-bottom:2px">Health Indicator</strong><span style="font-size:11px;color:#5a6270">green / amber / red</span></td>
+      <td style="text-align:center;font-size:22px;font-weight:bold;color:#3b82f6;padding:0 6px;vertical-align:middle">&rarr;</td>
+      <td style="border:2px solid #d97706;border-radius:8px;padding:12px 18px;text-align:center;vertical-align:middle"><strong style="display:block;font-size:13px;margin-bottom:2px">Component</strong><span style="font-size:11px;color:#5a6270">BFS dependency traversal</span></td>
+      <td style="text-align:center;font-size:22px;font-weight:bold;color:#3b82f6;padding:0 6px;vertical-align:middle">&rarr;</td>
+      <td style="border:2px solid #dc2626;border-radius:8px;padding:12px 18px;text-align:center;vertical-align:middle"><strong style="display:block;font-size:13px;margin-bottom:2px">Deployment</strong><span style="font-size:11px;color:#5a6270">worst of components</span></td>
+      <td style="text-align:center;font-size:22px;font-weight:bold;color:#3b82f6;padding:0 6px;vertical-align:middle">&rarr;</td>
+      <td style="border:2px solid #7c3aed;border-radius:8px;padding:12px 18px;text-align:center;vertical-align:middle"><strong style="display:block;font-size:13px;margin-bottom:2px">Application</strong><span style="font-size:11px;color:#5a6270">worst of deployments</span></td>
     </tr>
   </tbody>
 </table>
-</div>
 
-<hr>
-
-<!-- ── 5. Knowledge Graph ── -->
-<h2>5. Knowledge Graph (Blast Radius)</h2>
-
-<p>The knowledge graph represents application dependencies across five layers:</p>
-
-<div class="graph-diagram">
-  <div class="gbox ind"><strong>Health Indicators</strong><div class="sub">Process Group, Service, Synthetic</div></div>
-  <div class="gbox up"><strong>Upstream</strong><div class="sub">Cross-SEAL (left zone)</div></div>
-  <div class="gbox comp"><strong>Components</strong><div class="sub">Within SEAL (center)</div></div>
-  <div class="gbox down"><strong>Downstream</strong><div class="sub">Cross-SEAL (right zone)</div></div>
-  <div class="gbox plat"><strong>Platform</strong><div class="sub">GAP / GKP / ECS</div></div>
-  <div class="gbox dc"><strong>Data Center</strong><div class="sub">NA / EMEA / APAC</div></div>
-</div>
-
-<div class="table-wrap">
-<table>
-  <thead><tr><th>Edge Type</th><th>Meaning</th><th>Direction</th></tr></thead>
+<table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #ebedf0;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)">
+  <thead><tr><th style="background:#f8f9fb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:#5a6270;padding:10px 14px;text-align:left;border-bottom:2px solid #e0e3e8">Layer</th><th style="background:#f8f9fb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:#5a6270;padding:10px 14px;text-align:left;border-bottom:2px solid #e0e3e8">Values</th><th style="background:#f8f9fb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:#5a6270;padding:10px 14px;text-align:left;border-bottom:2px solid #e0e3e8">Ranking (lower = worse)</th></tr></thead>
   <tbody>
-    <tr><td>Component &rarr; Component</td><td>Runtime dependency</td><td>uni or bi</td></tr>
-    <tr><td>Component &rarr; Platform</td><td>Deployed on</td><td>Always uni</td></tr>
-    <tr><td>Platform &rarr; Data Center</td><td>Located in</td><td>Always uni</td></tr>
-    <tr><td>Component &rarr; Indicator</td><td>Monitored by</td><td>Always uni</td></tr>
-    <tr><td>Component &rarr; External</td><td>Cross-SEAL dependency</td><td>upstream / downstream / both</td></tr>
+    <tr>
+      <td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Indicator</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="font-size:13px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#16a34a;margin-right:6px"></span>green</span> &nbsp; <span style="font-size:13px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#d97706;margin-right:6px"></span>amber</span> &nbsp; <span style="font-size:13px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#dc2626;margin-right:6px"></span>red</span></td>
+      <td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">red (0), amber (1), green (2)</td>
+    </tr>
+    <tr style="background:#f8f9fb">
+      <td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Component / Deployment / App</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="font-size:13px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#dc2626;margin-right:6px"></span>critical</span> &nbsp; <span style="font-size:13px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#d97706;margin-right:6px"></span>warning</span> &nbsp; <span style="font-size:13px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#16a34a;margin-right:6px"></span>healthy</span> &nbsp; <span style="font-size:13px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#9ca3af;margin-right:6px"></span>no_data</span></td>
+      <td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">critical (0), warning (1), healthy (2), no_data (3)</td>
+    </tr>
   </tbody>
 </table>
-</div>
 
-<p>Currently 10 SEALs have knowledge graph data with 90+ components and 869 indicators. 71 additional apps have no graph data yet.</p>
+<hr style="border:none;border-top:1px solid #ebedf0;margin:32px 0">
 
-<hr>
+<!-- 5. Knowledge Graph -->
+<h2 style="font-size:20px;font-weight:700;margin:48px 0 16px;padding-bottom:10px;border-bottom:2px solid #e0e3e8">5. Knowledge Graph (Blast Radius)</h2>
 
-<!-- ── 5b. Essential Services ── -->
-<h2>5b. Essential Services</h2>
+<p style="margin-bottom:12px">The knowledge graph represents application dependencies across five layers:</p>
 
-<p>15 business-critical processes that map to multiple applications at the deployment level. Each ES derives its RAG status from the worst status among its mapped applications.</p>
-
-<div class="diagram-flow">
-  <div class="box green"><strong>Indicator</strong></div>
-  <div class="arrow">&rarr;</div>
-  <div class="box green"><strong>Component</strong></div>
-  <div class="arrow">&rarr;</div>
-  <div class="box green"><strong>Deployment</strong></div>
-  <div class="arrow">&rarr;</div>
-  <div class="box"><strong>Application</strong></div>
-  <div class="arrow">&rarr;</div>
-  <div class="box red"><strong>Essential Service</strong><div class="sub">worst of mapped apps</div></div>
-</div>
-
-<div class="table-wrap">
-<table>
-  <thead><tr><th>ID</th><th>Name</th><th>Criticality</th><th>Apps</th></tr></thead>
+<table style="width:100%;border-collapse:collapse;margin:20px 0">
   <tbody>
-    <tr><td>3213</td><td>Administer Sweep Functionality</td><td><span class="badge badge-amber">High</span></td><td>5-8</td></tr>
-    <tr><td>3208</td><td>Calculate and distribute NAVs (AM)</td><td><span class="badge badge-red">Critical</span></td><td>5-7</td></tr>
-    <tr><td>3198</td><td>Collateral management &amp; monitoring (WM)</td><td><span class="badge badge-blue">Medium</span></td><td>5-8</td></tr>
-    <tr><td>240292</td><td>Collateral management &amp; monitoring (AM)</td><td><span class="badge badge-blue">Medium</span></td><td>5-6</td></tr>
-    <tr><td>3197</td><td>Conduct Ongoing Due Diligence</td><td><span class="badge badge-blue">Medium</span></td><td>5-7</td></tr>
-    <tr><td>3199</td><td>Essential Client Requests &amp; Actions</td><td><span class="badge badge-amber">High</span></td><td>5-7</td></tr>
-    <tr><td>3210</td><td>Facilitate closing of committed mortgage loans</td><td><span class="badge badge-amber">High</span></td><td>5-6</td></tr>
-    <tr><td>3211</td><td>Facilitate Purchase &amp; Sell Orders in Brokerage</td><td><span class="badge badge-red">Critical</span></td><td>5-6</td></tr>
-    <tr><td>3212</td><td>Liquidate and distribute assets</td><td><span class="badge badge-red">Critical</span></td><td>5-7</td></tr>
-    <tr><td>3209</td><td>Maintain shareholder account info (AM)</td><td><span class="badge badge-amber">High</span></td><td>5-7</td></tr>
-    <tr><td>3196</td><td>Maintain shareholder account info (WM)</td><td><span class="badge badge-blue">Medium</span></td><td>5-7</td></tr>
-    <tr><td>3202</td><td>Manage US Money Market Mutual Funds</td><td><span class="badge badge-red">Critical</span></td><td>5-7</td></tr>
-    <tr><td>3214</td><td>Provide Access to Funds from Credit Facilities</td><td><span class="badge badge-red">Critical</span></td><td>5-6</td></tr>
-    <tr><td>3203</td><td>Provide portfolio/discretionary investment mgmt (AM)</td><td><span class="badge badge-amber">High</span></td><td>5-8</td></tr>
-    <tr><td>3204</td><td>Provide portfolio/discretionary investment mgmt (WM)</td><td><span class="badge badge-amber">High</span></td><td>5-8</td></tr>
+    <tr>
+      <td style="padding:4px" colspan="3">&nbsp;</td>
+      <td style="padding:4px;text-align:center">
+        <div style="border:2px solid #16a34a;border-radius:8px;padding:10px 14px;text-align:center;background:#ffffff"><strong style="font-size:12px;display:block">Health Indicators</strong><span style="font-size:11px;color:#5a6270">Process Group, Service, Synthetic</span></div>
+      </td>
+      <td style="padding:4px" colspan="3">&nbsp;</td>
+    </tr>
+    <tr>
+      <td style="padding:4px" colspan="2">&nbsp;</td>
+      <td style="padding:4px;text-align:center">
+        <div style="border:2px solid #5a6270;border-radius:8px;padding:10px 14px;text-align:center;background:#ffffff"><strong style="font-size:12px;display:block">Upstream</strong><span style="font-size:11px;color:#5a6270">Cross-SEAL (left zone)</span></div>
+      </td>
+      <td style="padding:4px;text-align:center">
+        <div style="border:2px solid #3b82f6;border-radius:8px;padding:10px 14px;text-align:center;background:#ffffff"><strong style="font-size:12px;display:block">Components</strong><span style="font-size:11px;color:#5a6270">Within SEAL (center)</span></div>
+      </td>
+      <td style="padding:4px;text-align:center">
+        <div style="border:2px solid #5a6270;border-radius:8px;padding:10px 14px;text-align:center;background:#ffffff"><strong style="font-size:12px;display:block">Downstream</strong><span style="font-size:11px;color:#5a6270">Cross-SEAL (right zone)</span></div>
+      </td>
+      <td style="padding:4px" colspan="2">&nbsp;</td>
+    </tr>
+    <tr>
+      <td style="padding:4px" colspan="3">&nbsp;</td>
+      <td style="padding:4px;text-align:center">
+        <div style="border:2px solid #d97706;border-radius:8px;padding:10px 14px;text-align:center;background:#ffffff"><strong style="font-size:12px;display:block">Platform</strong><span style="font-size:11px;color:#5a6270">GAP / GKP / ECS</span></div>
+      </td>
+      <td style="padding:4px" colspan="3">&nbsp;</td>
+    </tr>
+    <tr>
+      <td style="padding:4px" colspan="3">&nbsp;</td>
+      <td style="padding:4px;text-align:center">
+        <div style="border:2px solid #7c3aed;border-radius:8px;padding:10px 14px;text-align:center;background:#ffffff"><strong style="font-size:12px;display:block">Data Center</strong><span style="font-size:11px;color:#5a6270">NA / EMEA / APAC</span></div>
+      </td>
+      <td style="padding:4px" colspan="3">&nbsp;</td>
+    </tr>
   </tbody>
 </table>
-</div>
 
-<p>12 business processes link to 2-5 Essential Services each. Process status = worst of linked ES. ES maps to both <strong>Business Tree</strong> (LOB &rarr; Sub-LOB &rarr; Product Line) and <strong>Technology Tree</strong> (LOB &rarr; CTO &rarr; CBT) via mapped apps.</p>
+<table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #ebedf0;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)">
+  <thead><tr><th style="background:#f8f9fb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:#5a6270;padding:10px 14px;text-align:left;border-bottom:2px solid #e0e3e8">Edge Type</th><th style="background:#f8f9fb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:#5a6270;padding:10px 14px;text-align:left;border-bottom:2px solid #e0e3e8">Meaning</th><th style="background:#f8f9fb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:#5a6270;padding:10px 14px;text-align:left;border-bottom:2px solid #e0e3e8">Direction</th></tr></thead>
+  <tbody>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Component &rarr; Component</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Runtime dependency</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">uni or bi</td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Component &rarr; Platform</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Deployed on</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Always uni</td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Platform &rarr; Data Center</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Located in</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Always uni</td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Component &rarr; Indicator</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Monitored by</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Always uni</td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Component &rarr; External</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Cross-SEAL dependency</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">upstream / downstream / both</td></tr>
+  </tbody>
+</table>
 
-<hr>
+<p style="margin-bottom:12px;margin-top:12px">Currently 10 SEALs have knowledge graph data with 90+ components and 869 indicators. 71 additional apps have no graph data yet.</p>
 
-<!-- ── 5c. Outcome Measures ── -->
-<h2>5c. Outcome Measures</h2>
+<hr style="border:none;border-top:1px solid #ebedf0;margin:32px 0">
 
-<p>SRE operational metrics across 5 sections. Each includes KPI cards, 12-month trend charts, and CTO/CBT leaderboards.</p>
+<!-- 5b. Essential Services -->
+<h2 style="font-size:20px;font-weight:700;margin:48px 0 16px;padding-bottom:10px;border-bottom:2px solid #e0e3e8">5b. Essential Services</h2>
 
-<div class="metric-row">
-  <div class="metric"><div class="value">1</div><div class="label">Usage &amp; Adoption</div></div>
-  <div class="metric"><div class="value">2</div><div class="label">Workstream Outcomes</div></div>
-  <div class="metric"><div class="value">3</div><div class="label">SRE Effectiveness</div></div>
-  <div class="metric"><div class="value">4</div><div class="label">Traditional Support</div></div>
-  <div class="metric"><div class="value">5</div><div class="label">Baselines &amp; Coverage</div></div>
-</div>
+<p style="margin-bottom:12px">15 business-critical processes that map to multiple applications at the deployment level. Each ES derives its RAG status from the worst status among its mapped applications.</p>
 
-<p style="color:var(--text-muted); font-size:13px;">Full metric definitions in <a href="OUTCOME-MEASURES.html">OUTCOME-MEASURES</a>.</p>
+<table style="width:100%;border-collapse:collapse;margin:20px 0">
+  <tbody>
+    <tr>
+      <td style="border:2px solid #16a34a;border-radius:8px;padding:12px 18px;text-align:center;vertical-align:middle"><strong style="display:block;font-size:13px">Indicator</strong></td>
+      <td style="text-align:center;font-size:22px;font-weight:bold;color:#3b82f6;padding:0 6px;vertical-align:middle">&rarr;</td>
+      <td style="border:2px solid #16a34a;border-radius:8px;padding:12px 18px;text-align:center;vertical-align:middle"><strong style="display:block;font-size:13px">Component</strong></td>
+      <td style="text-align:center;font-size:22px;font-weight:bold;color:#3b82f6;padding:0 6px;vertical-align:middle">&rarr;</td>
+      <td style="border:2px solid #16a34a;border-radius:8px;padding:12px 18px;text-align:center;vertical-align:middle"><strong style="display:block;font-size:13px">Deployment</strong></td>
+      <td style="text-align:center;font-size:22px;font-weight:bold;color:#3b82f6;padding:0 6px;vertical-align:middle">&rarr;</td>
+      <td style="border:2px solid #3b82f6;border-radius:8px;padding:12px 18px;text-align:center;vertical-align:middle"><strong style="display:block;font-size:13px">Application</strong></td>
+      <td style="text-align:center;font-size:22px;font-weight:bold;color:#3b82f6;padding:0 6px;vertical-align:middle">&rarr;</td>
+      <td style="border:2px solid #dc2626;border-radius:8px;padding:12px 18px;text-align:center;vertical-align:middle"><strong style="display:block;font-size:13px;margin-bottom:2px">Essential Service</strong><span style="font-size:11px;color:#5a6270">worst of mapped apps</span></td>
+    </tr>
+  </tbody>
+</table>
 
-<hr>
+<table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #ebedf0;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)">
+  <thead><tr><th style="background:#f8f9fb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:#5a6270;padding:10px 14px;text-align:left;border-bottom:2px solid #e0e3e8">ID</th><th style="background:#f8f9fb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:#5a6270;padding:10px 14px;text-align:left;border-bottom:2px solid #e0e3e8">Name</th><th style="background:#f8f9fb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:#5a6270;padding:10px 14px;text-align:left;border-bottom:2px solid #e0e3e8">Criticality</th><th style="background:#f8f9fb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:#5a6270;padding:10px 14px;text-align:left;border-bottom:2px solid #e0e3e8">Apps</th></tr></thead>
+  <tbody>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">3213</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Administer Sweep Functionality</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#fef3c7;color:#92400e">High</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">5-8</td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">3208</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Calculate and distribute NAVs (AM)</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#fee2e2;color:#991b1b">Critical</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">5-7</td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">3198</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Collateral management &amp; monitoring (WM)</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dbeafe;color:#1d4ed8">Medium</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">5-8</td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">240292</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Collateral management &amp; monitoring (AM)</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dbeafe;color:#1d4ed8">Medium</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">5-6</td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">3197</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Conduct Ongoing Due Diligence</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dbeafe;color:#1d4ed8">Medium</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">5-7</td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">3199</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Essential Client Requests &amp; Actions</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#fef3c7;color:#92400e">High</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">5-7</td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">3210</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Facilitate closing of committed mortgage loans</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#fef3c7;color:#92400e">High</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">5-6</td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">3211</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Facilitate Purchase &amp; Sell Orders in Brokerage</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#fee2e2;color:#991b1b">Critical</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">5-6</td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">3212</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Liquidate and distribute assets</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#fee2e2;color:#991b1b">Critical</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">5-7</td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">3209</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Maintain shareholder account info (AM)</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#fef3c7;color:#92400e">High</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">5-7</td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">3196</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Maintain shareholder account info (WM)</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dbeafe;color:#1d4ed8">Medium</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">5-7</td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">3202</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Manage US Money Market Mutual Funds</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#fee2e2;color:#991b1b">Critical</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">5-7</td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">3214</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Provide Access to Funds from Credit Facilities</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#fee2e2;color:#991b1b">Critical</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">5-6</td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">3203</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Provide portfolio/discretionary investment mgmt (AM)</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#fef3c7;color:#92400e">High</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">5-8</td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">3204</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Provide portfolio/discretionary investment mgmt (WM)</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#fef3c7;color:#92400e">High</span></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">5-8</td></tr>
+  </tbody>
+</table>
 
-<!-- ── 5d. Situation Room ── -->
-<h2>5d. Situation Room</h2>
+<p style="margin-bottom:12px;margin-top:12px">12 business processes link to 2-5 Essential Services each. Process status = worst of linked ES. ES maps to both <strong>Business Tree</strong> (LOB &rarr; Sub-LOB &rarr; Product Line) and <strong>Technology Tree</strong> (LOB &rarr; CTO &rarr; CBT) via mapped apps.</p>
 
-<ul>
-  <li><strong>Situations:</strong> Active major incidents (P1/P2) with timeline tracking and state management</li>
-  <li><strong>Systems:</strong> Logical groupings of applications by SEAL with computed health status</li>
-  <li><strong>System Overrides:</strong> Per-situation overrides for timeline stage, capabilities, SRE lead assignments</li>
-  <li><strong>Situation Reports:</strong> Deep-dive exports with full system/app details and CTO/CBT coverage</li>
+<hr style="border:none;border-top:1px solid #ebedf0;margin:32px 0">
+
+<!-- 5c. Outcome Measures -->
+<h2 style="font-size:20px;font-weight:700;margin:48px 0 16px;padding-bottom:10px;border-bottom:2px solid #e0e3e8">5c. Outcome Measures</h2>
+
+<p style="margin-bottom:12px">SRE operational metrics across 5 sections. Each includes KPI cards, 12-month trend charts, and CTO/CBT leaderboards.</p>
+
+<table style="width:100%;border-collapse:collapse;margin:16px 0">
+  <tbody>
+    <tr>
+      <td style="border:1px solid #ebedf0;border-radius:8px;padding:14px 16px;text-align:center;vertical-align:top">
+        <div style="font-size:24px;font-weight:800;color:#3b82f6">1</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#5a6270;margin-top:4px">Usage &amp; Adoption</div>
+      </td>
+      <td style="border:1px solid #ebedf0;border-radius:8px;padding:14px 16px;text-align:center;vertical-align:top">
+        <div style="font-size:24px;font-weight:800;color:#3b82f6">2</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#5a6270;margin-top:4px">Workstream Outcomes</div>
+      </td>
+      <td style="border:1px solid #ebedf0;border-radius:8px;padding:14px 16px;text-align:center;vertical-align:top">
+        <div style="font-size:24px;font-weight:800;color:#3b82f6">3</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#5a6270;margin-top:4px">SRE Effectiveness</div>
+      </td>
+      <td style="border:1px solid #ebedf0;border-radius:8px;padding:14px 16px;text-align:center;vertical-align:top">
+        <div style="font-size:24px;font-weight:800;color:#3b82f6">4</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#5a6270;margin-top:4px">Traditional Support</div>
+      </td>
+      <td style="border:1px solid #ebedf0;border-radius:8px;padding:14px 16px;text-align:center;vertical-align:top">
+        <div style="font-size:24px;font-weight:800;color:#3b82f6">5</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#5a6270;margin-top:4px">Baselines &amp; Coverage</div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="color:#5a6270;font-size:13px;margin-bottom:12px">Full metric definitions in <a style="color:#3b82f6" href="OUTCOME-MEASURES.html">OUTCOME-MEASURES</a>.</p>
+
+<hr style="border:none;border-top:1px solid #ebedf0;margin:32px 0">
+
+<!-- 5d. Situation Room -->
+<h2 style="font-size:20px;font-weight:700;margin:48px 0 16px;padding-bottom:10px;border-bottom:2px solid #e0e3e8">5d. Situation Room</h2>
+
+<ul style="margin:0 0 12px 24px">
+  <li style="margin-bottom:4px"><strong>Situations:</strong> Active major incidents (P1/P2) with timeline tracking and state management</li>
+  <li style="margin-bottom:4px"><strong>Systems:</strong> Logical groupings of applications by SEAL with computed health status</li>
+  <li style="margin-bottom:4px"><strong>System Overrides:</strong> Per-situation overrides for timeline stage, capabilities, SRE lead assignments</li>
+  <li style="margin-bottom:4px"><strong>Situation Reports:</strong> Deep-dive exports with full system/app details and CTO/CBT coverage</li>
 </ul>
 
-<div class="diagram-flow">
-  <div class="box"><strong>Situation</strong><div class="sub">Active P1/P2</div></div>
-  <div class="arrow">&rarr;</div>
-  <div class="box"><strong>Systems</strong><div class="sub">Logical app groupings</div></div>
-  <div class="arrow">&rarr;</div>
-  <div class="box green"><strong>SEALs</strong><div class="sub">Enriched apps with health</div></div>
-</div>
-
-<hr>
-
-<!-- ── 6. External Integrations ── -->
-<h2>6. External System Integrations</h2>
-
-<div class="card accent-left">
-  <h3 style="margin-top:0">V12</h3>
-  <p>Single source of truth for <strong>application catalog</strong>, <strong>technology hierarchy</strong>, <strong>deployments</strong>, and <strong>team roles</strong> (including SRE contacts).</p>
-  <ul>
-    <li>Application metadata: name, SEAL, owner, SLA, risk ranking, classification, state</li>
-    <li>Technology hierarchy: LOB &rarr; CTO &rarr; CBT &rarr; Application</li>
-    <li>Application &rarr; Deployment mappings</li>
-    <li>Team roles tied to Application contacts</li>
-  </ul>
-</div>
-
-<div class="card accent-purple">
-  <h3 style="margin-top:0">ERMA</h3>
-  <p>Component <strong>dependency graph</strong> and cross-application relationship data, complementing V12.</p>
-  <ul>
-    <li>Component dependency graph: nodes, edges, cross-application relationships</li>
-    <li>Business Process &rarr; Application mapping</li>
-  </ul>
-</div>
-
-<div class="card accent-green">
-  <h3 style="margin-top:0">Knowledge Graph</h3>
-  <p><strong>Platform</strong>, <strong>data center</strong>, and <strong>health indicator</strong> node data.</p>
-  <ul>
-    <li>Platform nodes (GAP, GKP, ECS, EKS, AWS) with status</li>
-    <li>Data center nodes (NA, EMEA, APAC) with region and status</li>
-    <li>Health indicator nodes for RAG status computation</li>
-  </ul>
-</div>
-
-<div class="card accent-amber">
-  <h3 style="margin-top:0">Unified Reporting API</h3>
-  <p><strong>Incident</strong>, problem, and change data correlated to applications.</p>
-  <ul>
-    <li>Active incidents (P1/P2) with severity, status, timestamps</li>
-    <li>Incident history (30-day, 90-day trends)</li>
-    <li>MTTR, MTTA, resolution rate, escalation rate</li>
-  </ul>
-</div>
-
-<div class="card accent-red">
-  <h3 style="margin-top:0">Service Status &amp; GEM/Cortex</h3>
-  <p><strong>SLO targets and actuals</strong>, error budgets, burn rates.</p>
-  <ul>
-    <li>SLO target and current values per application/deployment</li>
-    <li>Error budget remaining and burn rate</li>
-    <li>Historical SLO performance for trend analysis</li>
-  </ul>
-</div>
-
-<div class="card accent-left">
-  <h3 style="margin-top:0">AURA AI Streaming API</h3>
-  <p>AI-powered <strong>analysis, summarization, and chat</strong> with observability context.</p>
-  <ul>
-    <li>AURA Summary (critical alerts, trend analysis, recommendations)</li>
-    <li>Blast Radius impact severity and executive summary</li>
-    <li>Interactive chat with SSE streaming</li>
-  </ul>
-</div>
-
-<p style="color:var(--text-muted); font-size:13px;">Detailed API endpoint specs are in <a href="API-CURRENT.html">API-CURRENT</a> and <a href="API_DATA.html">API_DATA</a>.</p>
-
-<hr>
-
-<!-- ── 7. Frontend Architecture ── -->
-<h2>7. Frontend Architecture</h2>
-
-<h3>Page Structure</h3>
-
-<div class="table-wrap">
-<table>
-  <thead><tr><th>Page</th><th>Route</th><th>Filters?</th></tr></thead>
+<table style="width:100%;border-collapse:collapse;margin:20px 0">
   <tbody>
-    <tr><td>Executive Overview</td><td><code>/</code></td><td><span class="badge badge-green">Yes</span></td></tr>
-    <tr><td>Applications</td><td><code>/applications</code></td><td><span class="badge badge-green">Yes</span></td></tr>
-    <tr><td>Blast Radius</td><td><code>/graph-layers</code></td><td><span class="badge badge-amber">Partial</span></td></tr>
-    <tr><td>Incident Zero</td><td><code>/incident-zero</code></td><td><span class="badge badge-blue">No</span></td></tr>
-    <tr><td>Customer Journey</td><td><code>/customer-journey</code></td><td><span class="badge badge-blue">No</span></td></tr>
-    <tr><td>SLO Agent</td><td><code>/slo-agent</code></td><td><span class="badge badge-blue">No</span></td></tr>
-    <tr><td>Teams</td><td><code>/teams</code></td><td><span class="badge badge-blue">No</span></td></tr>
-    <tr><td>Announcements</td><td><code>/announcements</code></td><td><span class="badge badge-blue">No</span></td></tr>
-    <tr><td>Essential Services</td><td><code>/essential-services</code></td><td><span class="badge badge-green">Yes</span></td></tr>
-    <tr><td>Outcome Measures</td><td><code>/outcome-measures</code></td><td><span class="badge badge-green">Yes</span></td></tr>
-    <tr><td>Situation Room</td><td><code>/situation-room</code></td><td><span class="badge badge-blue">No</span></td></tr>
-    <tr><td>View Central</td><td><code>/view-central/:id</code></td><td><span class="badge badge-green">Yes</span></td></tr>
-    <tr><td>Multi-Tenant Portal</td><td><code>/portals</code></td><td><span class="badge badge-blue">No</span></td></tr>
+    <tr>
+      <td style="border:2px solid #3b82f6;border-radius:8px;padding:12px 18px;text-align:center;vertical-align:middle"><strong style="display:block;font-size:13px;margin-bottom:2px">Situation</strong><span style="font-size:11px;color:#5a6270">Active P1/P2</span></td>
+      <td style="text-align:center;font-size:22px;font-weight:bold;color:#3b82f6;padding:0 6px;vertical-align:middle">&rarr;</td>
+      <td style="border:2px solid #3b82f6;border-radius:8px;padding:12px 18px;text-align:center;vertical-align:middle"><strong style="display:block;font-size:13px;margin-bottom:2px">Systems</strong><span style="font-size:11px;color:#5a6270">Logical app groupings</span></td>
+      <td style="text-align:center;font-size:22px;font-weight:bold;color:#3b82f6;padding:0 6px;vertical-align:middle">&rarr;</td>
+      <td style="border:2px solid #16a34a;border-radius:8px;padding:12px 18px;text-align:center;vertical-align:middle"><strong style="display:block;font-size:13px;margin-bottom:2px">SEALs</strong><span style="font-size:11px;color:#5a6270">Enriched apps with health</span></td>
+    </tr>
   </tbody>
 </table>
+
+<hr style="border:none;border-top:1px solid #ebedf0;margin:32px 0">
+
+<!-- 6. External Integrations -->
+<h2 style="font-size:20px;font-weight:700;margin:48px 0 16px;padding-bottom:10px;border-bottom:2px solid #e0e3e8">6. External System Integrations</h2>
+
+<div style="background:#ffffff;border:1px solid #ebedf0;border-radius:8px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);border-left:4px solid #3b82f6">
+  <h3 style="font-size:16px;font-weight:600;margin:0 0 12px">V12</h3>
+  <p style="margin-bottom:12px">Single source of truth for <strong>application catalog</strong>, <strong>technology hierarchy</strong>, <strong>deployments</strong>, and <strong>team roles</strong> (including SRE contacts).</p>
+  <ul style="margin:0 0 12px 24px">
+    <li style="margin-bottom:4px">Application metadata: name, SEAL, owner, SLA, risk ranking, classification, state</li>
+    <li style="margin-bottom:4px">Technology hierarchy: LOB &rarr; CTO &rarr; CBT &rarr; Application</li>
+    <li style="margin-bottom:4px">Application &rarr; Deployment mappings</li>
+    <li style="margin-bottom:4px">Team roles tied to Application contacts</li>
+  </ul>
 </div>
 
-<h3>Filter System</h3>
-
-<div class="diagram-flow">
-  <div class="box"><strong>ScopeBar</strong><div class="sub">UI controls</div></div>
-  <div class="arrow">&rarr;</div>
-  <div class="box"><strong>FilterContext</strong><div class="sub">React context</div></div>
-  <div class="arrow">&rarr;</div>
-  <div class="box"><strong>Query String</strong><div class="sub">URL encoding</div></div>
-  <div class="arrow">&rarr;</div>
-  <div class="box muted"><strong>API Calls</strong><div class="sub">Filtered endpoints</div></div>
+<div style="background:#ffffff;border:1px solid #ebedf0;border-radius:8px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);border-left:4px solid #7c3aed">
+  <h3 style="font-size:16px;font-weight:600;margin:0 0 12px">ERMA</h3>
+  <p style="margin-bottom:12px">Component <strong>dependency graph</strong> and cross-application relationship data, complementing V12.</p>
+  <ul style="margin:0 0 12px 24px">
+    <li style="margin-bottom:4px">Component dependency graph: nodes, edges, cross-application relationships</li>
+    <li style="margin-bottom:4px">Business Process &rarr; Application mapping</li>
+  </ul>
 </div>
 
-<p>Filters use AND logic and cascade dynamically &mdash; selecting LOB = "AWM" restricts CTO dropdown to AWM CTOs only. Four filter groups: Business Hierarchy (LOB, Sub-LOB, Product Line, Product), Technology (CTO, CBT), Application (SEAL, Risk, etc.), Infrastructure (Deployment).</p>
+<div style="background:#ffffff;border:1px solid #ebedf0;border-radius:8px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);border-left:4px solid #16a34a">
+  <h3 style="font-size:16px;font-weight:600;margin:0 0 12px">Knowledge Graph</h3>
+  <p style="margin-bottom:12px"><strong>Platform</strong>, <strong>data center</strong>, and <strong>health indicator</strong> node data.</p>
+  <ul style="margin:0 0 12px 24px">
+    <li style="margin-bottom:4px">Platform nodes (GAP, GKP, ECS, EKS, AWS) with status</li>
+    <li style="margin-bottom:4px">Data center nodes (NA, EMEA, APAC) with region and status</li>
+    <li style="margin-bottom:4px">Health indicator nodes for RAG status computation</li>
+  </ul>
+</div>
 
-<hr>
+<div style="background:#ffffff;border:1px solid #ebedf0;border-radius:8px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);border-left:4px solid #d97706">
+  <h3 style="font-size:16px;font-weight:600;margin:0 0 12px">Unified Reporting API</h3>
+  <p style="margin-bottom:12px"><strong>Incident</strong>, problem, and change data correlated to applications.</p>
+  <ul style="margin:0 0 12px 24px">
+    <li style="margin-bottom:4px">Active incidents (P1/P2) with severity, status, timestamps</li>
+    <li style="margin-bottom:4px">Incident history (30-day, 90-day trends)</li>
+    <li style="margin-bottom:4px">MTTR, MTTA, resolution rate, escalation rate</li>
+  </ul>
+</div>
 
-<!-- ── 8. Known Issues ── -->
-<h2>8. Known Issues</h2>
+<div style="background:#ffffff;border:1px solid #ebedf0;border-radius:8px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);border-left:4px solid #dc2626">
+  <h3 style="font-size:16px;font-weight:600;margin:0 0 12px">Service Status &amp; GEM/Cortex</h3>
+  <p style="margin-bottom:12px"><strong>SLO targets and actuals</strong>, error budgets, burn rates.</p>
+  <ul style="margin:0 0 12px 24px">
+    <li style="margin-bottom:4px">SLO target and current values per application/deployment</li>
+    <li style="margin-bottom:4px">Error budget remaining and burn rate</li>
+    <li style="margin-bottom:4px">Historical SLO performance for trend analysis</li>
+  </ul>
+</div>
 
-<div class="table-wrap">
-<table>
-  <thead><tr><th>Issue</th><th>Impact</th></tr></thead>
+<div style="background:#ffffff;border:1px solid #ebedf0;border-radius:8px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);border-left:4px solid #3b82f6">
+  <h3 style="font-size:16px;font-weight:600;margin:0 0 12px">AURA AI Streaming API</h3>
+  <p style="margin-bottom:12px">AI-powered <strong>analysis, summarization, and chat</strong> with observability context.</p>
+  <ul style="margin:0 0 12px 24px">
+    <li style="margin-bottom:4px">AURA Summary (critical alerts, trend analysis, recommendations)</li>
+    <li style="margin-bottom:4px">Blast Radius impact severity and executive summary</li>
+    <li style="margin-bottom:4px">Interactive chat with SSE streaming</li>
+  </ul>
+</div>
+
+<p style="color:#5a6270;font-size:13px;margin-bottom:12px">Detailed API endpoint specs are in <a style="color:#3b82f6" href="API-CURRENT.html">API-CURRENT</a> and <a style="color:#3b82f6" href="API_DATA.html">API_DATA</a>.</p>
+
+<hr style="border:none;border-top:1px solid #ebedf0;margin:32px 0">
+
+<!-- 7. Frontend Architecture -->
+<h2 style="font-size:20px;font-weight:700;margin:48px 0 16px;padding-bottom:10px;border-bottom:2px solid #e0e3e8">7. Frontend Architecture</h2>
+
+<h3 style="font-size:16px;font-weight:600;margin:28px 0 12px">Page Structure</h3>
+
+<table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #ebedf0;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)">
+  <thead><tr><th style="background:#f8f9fb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:#5a6270;padding:10px 14px;text-align:left;border-bottom:2px solid #e0e3e8">Page</th><th style="background:#f8f9fb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:#5a6270;padding:10px 14px;text-align:left;border-bottom:2px solid #e0e3e8">Route</th><th style="background:#f8f9fb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:#5a6270;padding:10px 14px;text-align:left;border-bottom:2px solid #e0e3e8">Filters?</th></tr></thead>
   <tbody>
-    <tr><td><strong>Dual data source</strong> &mdash; app metadata in both frontend and backend</td><td>Filter options can diverge from API results. Fix: replace with single V12 call.</td></tr>
-    <tr><td><strong>Status terminology</strong> &mdash; indicators use green/amber/red, apps use healthy/warning/critical</td><td>Normalize to healthy/warning/critical throughout.</td></tr>
-    <tr><td><strong>Static pages</strong> &mdash; Incident Zero, Customer Journey, SLO Agent have no backend API</td><td>Need dedicated endpoints for production.</td></tr>
-    <tr><td><strong>No pagination</strong> &mdash; all endpoints return full result sets</td><td>Required for 500+ app catalogs.</td></tr>
-    <tr><td><strong>No caching headers</strong></td><td>Need ETag / Cache-Control for performance.</td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Executive Overview</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><code style="font-family:'SF Mono','Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;background:#f1f3f5;padding:2px 6px;border-radius:4px">/</code></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dcfce7;color:#15803d">Yes</span></td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Applications</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><code style="font-family:'SF Mono','Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;background:#f1f3f5;padding:2px 6px;border-radius:4px">/applications</code></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dcfce7;color:#15803d">Yes</span></td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Blast Radius</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><code style="font-family:'SF Mono','Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;background:#f1f3f5;padding:2px 6px;border-radius:4px">/graph-layers</code></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#fef3c7;color:#92400e">Partial</span></td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Incident Zero</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><code style="font-family:'SF Mono','Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;background:#f1f3f5;padding:2px 6px;border-radius:4px">/incident-zero</code></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dbeafe;color:#1d4ed8">No</span></td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Customer Journey</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><code style="font-family:'SF Mono','Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;background:#f1f3f5;padding:2px 6px;border-radius:4px">/customer-journey</code></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dbeafe;color:#1d4ed8">No</span></td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">SLO Agent</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><code style="font-family:'SF Mono','Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;background:#f1f3f5;padding:2px 6px;border-radius:4px">/slo-agent</code></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dbeafe;color:#1d4ed8">No</span></td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Teams</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><code style="font-family:'SF Mono','Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;background:#f1f3f5;padding:2px 6px;border-radius:4px">/teams</code></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dbeafe;color:#1d4ed8">No</span></td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Announcements</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><code style="font-family:'SF Mono','Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;background:#f1f3f5;padding:2px 6px;border-radius:4px">/announcements</code></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dbeafe;color:#1d4ed8">No</span></td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Essential Services</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><code style="font-family:'SF Mono','Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;background:#f1f3f5;padding:2px 6px;border-radius:4px">/essential-services</code></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dcfce7;color:#15803d">Yes</span></td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Outcome Measures</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><code style="font-family:'SF Mono','Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;background:#f1f3f5;padding:2px 6px;border-radius:4px">/outcome-measures</code></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dcfce7;color:#15803d">Yes</span></td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Situation Room</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><code style="font-family:'SF Mono','Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;background:#f1f3f5;padding:2px 6px;border-radius:4px">/situation-room</code></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dbeafe;color:#1d4ed8">No</span></td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">View Central</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><code style="font-family:'SF Mono','Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;background:#f1f3f5;padding:2px 6px;border-radius:4px">/view-central/:id</code></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dcfce7;color:#15803d">Yes</span></td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Multi-Tenant Portal</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><code style="font-family:'SF Mono','Cascadia Code','Fira Code',Consolas,monospace;font-size:12px;background:#f1f3f5;padding:2px 6px;border-radius:4px">/portals</code></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dbeafe;color:#1d4ed8">No</span></td></tr>
   </tbody>
 </table>
-</div>
 
-<hr>
+<h3 style="font-size:16px;font-weight:600;margin:28px 0 12px">Filter System</h3>
 
-<!-- ── 9. Deployment ── -->
-<h2>9. Deployment</h2>
+<table style="width:100%;border-collapse:collapse;margin:20px 0">
+  <tbody>
+    <tr>
+      <td style="border:2px solid #3b82f6;border-radius:8px;padding:12px 18px;text-align:center;vertical-align:middle"><strong style="display:block;font-size:13px;margin-bottom:2px">ScopeBar</strong><span style="font-size:11px;color:#5a6270">UI controls</span></td>
+      <td style="text-align:center;font-size:22px;font-weight:bold;color:#3b82f6;padding:0 6px;vertical-align:middle">&rarr;</td>
+      <td style="border:2px solid #3b82f6;border-radius:8px;padding:12px 18px;text-align:center;vertical-align:middle"><strong style="display:block;font-size:13px;margin-bottom:2px">FilterContext</strong><span style="font-size:11px;color:#5a6270">React context</span></td>
+      <td style="text-align:center;font-size:22px;font-weight:bold;color:#3b82f6;padding:0 6px;vertical-align:middle">&rarr;</td>
+      <td style="border:2px solid #3b82f6;border-radius:8px;padding:12px 18px;text-align:center;vertical-align:middle"><strong style="display:block;font-size:13px;margin-bottom:2px">Query String</strong><span style="font-size:11px;color:#5a6270">URL encoding</span></td>
+      <td style="text-align:center;font-size:22px;font-weight:bold;color:#3b82f6;padding:0 6px;vertical-align:middle">&rarr;</td>
+      <td style="border:2px solid #e0e3e8;border-radius:8px;padding:12px 18px;text-align:center;vertical-align:middle"><strong style="display:block;font-size:13px;margin-bottom:2px">API Calls</strong><span style="font-size:11px;color:#5a6270">Filtered endpoints</span></td>
+    </tr>
+  </tbody>
+</table>
 
-<h3>Repository Structure</h3>
+<p style="margin-bottom:12px">Filters use AND logic and cascade dynamically &mdash; selecting LOB = "AWM" restricts CTO dropdown to AWM CTOs only. Four filter groups: Business Hierarchy (LOB, Sub-LOB, Product Line, Product), Technology (CTO, CBT), Application (SEAL, Risk, etc.), Infrastructure (Deployment).</p>
 
-<div class="diagram-stacks">
-  <div class="stack">
-    <div class="stack-title">uop-api/</div>
-    <div class="stack-item"><strong>app/routers/</strong> &mdash; 11 endpoint modules</div>
-    <div class="stack-item"><strong>app/services/</strong> &mdash; enrichment, graph_engine, email</div>
-    <div class="stack-item"><strong>app/mock_data/</strong> &mdash; Static seed data</div>
-    <div class="stack-item"><strong>manifest.yml</strong> &mdash; CF deployment (python_buildpack)</div>
-  </div>
-  <div class="stack-connector">&#8596;</div>
-  <div class="stack">
-    <div class="stack-title">uop-ui/</div>
-    <div class="stack-item"><strong>src/pages/</strong> &mdash; Page components</div>
-    <div class="stack-item"><strong>src/components/</strong> &mdash; Shared components</div>
-    <div class="stack-item"><strong>src/view-central/</strong> &mdash; Widgets, dashboards</div>
-    <div class="stack-item"><strong>manifest.yml</strong> &mdash; CF deployment (staticfile_buildpack)</div>
-  </div>
-</div>
+<hr style="border:none;border-top:1px solid #ebedf0;margin:32px 0">
 
-<h3>Local Development</h3>
+<!-- 8. Known Issues -->
+<h2 style="font-size:20px;font-weight:700;margin:48px 0 16px;padding-bottom:10px;border-bottom:2px solid #e0e3e8">8. Known Issues</h2>
 
-<pre><code># Terminal 1 — API
+<table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #ebedf0;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)">
+  <thead><tr><th style="background:#f8f9fb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:#5a6270;padding:10px 14px;text-align:left;border-bottom:2px solid #e0e3e8">Issue</th><th style="background:#f8f9fb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:#5a6270;padding:10px 14px;text-align:left;border-bottom:2px solid #e0e3e8">Impact</th></tr></thead>
+  <tbody>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><strong>Dual data source</strong> &mdash; app metadata in both frontend and backend</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Filter options can diverge from API results. Fix: replace with single V12 call.</td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><strong>Status terminology</strong> &mdash; indicators use green/amber/red, apps use healthy/warning/critical</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Normalize to healthy/warning/critical throughout.</td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><strong>Static pages</strong> &mdash; Incident Zero, Customer Journey, SLO Agent have no backend API</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Need dedicated endpoints for production.</td></tr>
+    <tr style="background:#f8f9fb"><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><strong>No pagination</strong> &mdash; all endpoints return full result sets</td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Required for 500+ app catalogs.</td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top"><strong>No caching headers</strong></td><td style="padding:10px 14px;border-bottom:1px solid #ebedf0;vertical-align:top">Need ETag / Cache-Control for performance.</td></tr>
+  </tbody>
+</table>
+
+<hr style="border:none;border-top:1px solid #ebedf0;margin:32px 0">
+
+<!-- 9. Deployment -->
+<h2 style="font-size:20px;font-weight:700;margin:48px 0 16px;padding-bottom:10px;border-bottom:2px solid #e0e3e8">9. Deployment</h2>
+
+<h3 style="font-size:16px;font-weight:600;margin:28px 0 12px">Repository Structure</h3>
+
+<table style="width:100%;border-collapse:collapse;margin:20px 0">
+  <tbody>
+    <tr>
+      <td style="vertical-align:top;width:45%;padding:0">
+        <table style="width:100%;border-collapse:collapse;border:2px solid #3b82f6;border-radius:8px">
+          <tr><td style="background:#3b82f6;color:white;padding:8px 14px;font-size:13px;font-weight:700;text-align:center">uop-api/</td></tr>
+          <tr><td style="padding:8px 14px;border-bottom:1px solid #ebedf0;font-size:12px"><strong>app/routers/</strong> &mdash; 11 endpoint modules</td></tr>
+          <tr><td style="padding:8px 14px;border-bottom:1px solid #ebedf0;font-size:12px"><strong>app/services/</strong> &mdash; enrichment, graph_engine, email</td></tr>
+          <tr><td style="padding:8px 14px;border-bottom:1px solid #ebedf0;font-size:12px"><strong>app/mock_data/</strong> &mdash; Static seed data</td></tr>
+          <tr><td style="padding:8px 14px;font-size:12px"><strong>manifest.yml</strong> &mdash; CF deployment (python_buildpack)</td></tr>
+        </table>
+      </td>
+      <td style="text-align:center;font-size:22px;font-weight:bold;color:#3b82f6;padding:0 6px;vertical-align:middle;width:10%">&#8596;</td>
+      <td style="vertical-align:top;width:45%;padding:0">
+        <table style="width:100%;border-collapse:collapse;border:2px solid #3b82f6;border-radius:8px">
+          <tr><td style="background:#3b82f6;color:white;padding:8px 14px;font-size:13px;font-weight:700;text-align:center">uop-ui/</td></tr>
+          <tr><td style="padding:8px 14px;border-bottom:1px solid #ebedf0;font-size:12px"><strong>src/pages/</strong> &mdash; Page components</td></tr>
+          <tr><td style="padding:8px 14px;border-bottom:1px solid #ebedf0;font-size:12px"><strong>src/components/</strong> &mdash; Shared components</td></tr>
+          <tr><td style="padding:8px 14px;border-bottom:1px solid #ebedf0;font-size:12px"><strong>src/view-central/</strong> &mdash; Widgets, dashboards</td></tr>
+          <tr><td style="padding:8px 14px;font-size:12px"><strong>manifest.yml</strong> &mdash; CF deployment (staticfile_buildpack)</td></tr>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 style="font-size:16px;font-weight:600;margin:28px 0 12px">Local Development</h3>
+
+<pre style="background:#f1f3f5;border:1px solid #ebedf0;border-radius:8px;padding:16px 20px;overflow-x:auto;font-family:'SF Mono','Cascadia Code','Fira Code',Consolas,monospace;font-size:13px;line-height:1.6;margin:12px 0 16px"><code style="background:none;padding:0"># Terminal 1 — API
 cd uop-api
 pip install -r requirements.txt
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
