@@ -274,7 +274,116 @@ However, the **high-impact, high-value actions** — org-wide scanning, automate
 
 ---
 
-## 9. Implementation Timeline
+## 9. Resilient AI Backend Architecture (Internal)
+
+> **Note:** This section is for UOP team internal planning. It should not be shared externally without review.
+
+### Design Principle
+
+UOP's chat interface is **backend-agnostic**. It consumes SSE streams with typed blocks (`text`, `metric_cards`, `table`, `recommendations`, etc.) regardless of what generates them. This means UOP can switch between AI backends with zero frontend code changes — only a configuration flip.
+
+### Dual-Backend Strategy
+
+```
+UOP-UI (Browser)
+  └── AURA Chat Panel
+        │
+        ├── Primary: AURA Backend
+        │     POST ${AURA_API_URL}/api/aura/chat
+        │     └── AURA's SmartSDK Agent → MCPs
+        │           ├── FinOps MCP
+        │           ├── Sourcegraph MCP
+        │           ├── ServiceNow, Dynatrace, ERMA, etc.
+        │           └── Bitbucket + Jira MCPs
+        │
+        └── Fallback: UOP Direct SmartSDK
+              POST ${SMARTSDK_API_URL}/api/aura/chat
+              └── UOP's own SmartSDK Agent → Same MCPs
+                    ├── FinOps MCP
+                    ├── Sourcegraph MCP
+                    └── Bitbucket + Jira MCPs
+```
+
+Both backends emit the **identical SSE event format** — the UI cannot tell the difference. This is possible because both use SmartSDK under the hood; the only difference is who hosts the agent.
+
+### How It Works
+
+**Runtime configuration** (no code deploy needed):
+
+```javascript
+// public/env-config.js — injected at deploy time
+window.__ENV__ = {
+  API_URL: "",
+  AURA_BACKEND: "aura",                    // "aura" | "smartsdk"
+  AURA_API_URL: "https://aura.internal",   // AURA team's endpoint
+  SMARTSDK_API_URL: "",                     // UOP's own SmartSDK endpoint (defaults to API_URL)
+};
+```
+
+```javascript
+// src/config.js — consumed by AuraChatContext
+export const API_URL = window.__ENV__?.API_URL || '';
+export const AURA_BACKEND = window.__ENV__?.AURA_BACKEND || 'aura';
+export const AURA_API_URL = window.__ENV__?.AURA_API_URL || API_URL;
+export const SMARTSDK_API_URL = window.__ENV__?.SMARTSDK_API_URL || API_URL;
+```
+
+**Switching backends:**
+- **Manual (ops):** Change `AURA_BACKEND` in `env-config.js` and redeploy the static assets (or update CloudFoundry env var). No API changes needed.
+- **Automatic (resilience):** `AuraChatContext.jsx` tracks consecutive failures. After 3 failed requests to the primary backend, it silently switches to the fallback for the remainder of the session. A page refresh resets to the configured primary.
+
+### UI Changes Required
+
+| File | Change | Description |
+|------|--------|-------------|
+| `public/env-config.js` | Add vars | `AURA_BACKEND`, `AURA_API_URL`, `SMARTSDK_API_URL` |
+| `src/config.js` | Export vars | Read new env vars with fallback defaults |
+| `src/aura/AuraChatContext.jsx` | Backend routing | Read config to determine which URL to POST to; add error counter for auto-fallback; expose `backend` state on context |
+| `src/aura/AuraChatFab.jsx` | No change | FAB is backend-agnostic |
+| `src/aura/AuraChatPanel.jsx` | No change | Panel renders blocks regardless of source |
+| `src/aura/AuraChatMenu.jsx` | Hidden toggle (optional) | See below |
+
+### Hidden Backend Toggle (For Internal Testing)
+
+For UOP team members to test SmartSDK mode without changing deployment config:
+
+- **Trigger:** Click the "AURA" title in the chat header 5 times rapidly — this reveals an "Advanced" section in the chat settings menu
+- **Toggle:** Switch between "AURA" and "Direct SmartSDK" backends
+- **Indicator:** When on SmartSDK, the chat header subtitle changes from "AI Assistant" to "AI Assistant (Direct)" — subtle enough that only someone looking for it would notice
+- **Persistence:** Stored in `localStorage` so it survives page refreshes; cleared by closing the advanced panel
+- **URL override:** `?aura_backend=smartsdk` query parameter forces SmartSDK mode for the session (useful for sharing test links)
+
+### Auto-Failover Logic
+
+```
+AuraChatContext.jsx:
+  consecutiveErrors = 0
+
+  on sendMessage():
+    url = (backend === 'aura') ? AURA_API_URL : SMARTSDK_API_URL
+    try:
+      stream = POST ${url}/api/aura/chat
+      consecutiveErrors = 0    // reset on success
+    catch:
+      consecutiveErrors++
+      if consecutiveErrors >= 3 and fallbackAvailable:
+        backend = 'smartsdk'   // silent switch
+        retry with new backend
+```
+
+### Why This Matters
+
+| Benefit | Description |
+|---------|-------------|
+| **No single-team dependency** | UOP's AI capability doesn't depend entirely on AURA's uptime or roadmap |
+| **Resilience** | AURA outage doesn't mean UOP AI goes dark — automatic failover to SmartSDK |
+| **Independent iteration** | UOP team can test new MCP tools on SmartSDK without waiting for AURA's release cycle |
+| **Political framing** | This is an **architecture resilience pattern**, not a bypass — comparable to having a secondary database replica |
+| **Zero user impact** | Users see the same chat, same blocks, same experience regardless of which backend is active |
+
+---
+
+## 10. Implementation Timeline
 
 | Phase | Description | Effort |
 |-------|-------------|--------|
@@ -288,7 +397,7 @@ Phase 1 can be delivered immediately as a proof of concept to demonstrate the va
 
 ---
 
-## 10. Summary
+## 11. Summary
 
 | | Cline (Local) | AURA (Centralized) |
 |-|---------------|---------------------|
