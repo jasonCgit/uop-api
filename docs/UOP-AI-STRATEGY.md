@@ -22,7 +22,7 @@ This strategy extends to any MCP-based capability — FinOps, Sourcegraph, Bitbu
 
 | Team | Owns | AI Approach |
 |------|------|-------------|
-| **FinOps Team** | FinOps MCP, DevGPT Cline modes, cost data | VS Code Cline extension with Sourcegraph MCP — requires per-developer local setup |
+| **DevGPT Cline Team** | MCP management, DevGPT Cline modes (FinOps, Resiliency, Cost-Optimization, etc.) | VS Code Cline extension with Sourcegraph MCP — requires per-developer local setup |
 | **AURA Team** | Agentic AI workflow, SmartSDK agents, MCP orchestration | Centralized AI backend with tool calling, IAM, guardrails |
 | **UOP Team** | Unified Operations Platform, chat UI, dashboards, View Central | Platform where all users already are — needs AI integration |
 | **SmartSDK (CDAO)** | Fusion SmartSDK framework, Gen AI Gateway | Foundational SDK — available to any team including UOP directly |
@@ -132,7 +132,7 @@ Team builds MCP server
 | Category | MCP Tools | Source | Status |
 |----------|-----------|--------|--------|
 | **Operations** | query_incidents, get_metrics, check_slos, search_graph, get_app_metadata, lookup_contacts | AURA / UOP | Documented in SmartSDK guide |
-| **FinOps** | query_cost_data, get_finops_recommendations, check_graviton_eligibility, get_spot_candidates, check_lightswitch_status | FinOps Team | Available in Cline; needs server-side deployment |
+| **FinOps** | query_cost_data, get_finops_recommendations, check_graviton_eligibility, get_spot_candidates, check_lightswitch_status | DevGPT Cline Team | Available in Cline; needs server-side deployment |
 | **Code Intelligence** | search_code, get_file_content, create_batch_change | Sourcegraph | MCP exists; needs service account |
 | **Source Control** | create_branch, commit_files, create_pull_request | Bitbucket | Standard API; wrap as MCP tool |
 | **Project Tracking** | create_issue, link_to_pr | Jira | Standard API; wrap as MCP tool |
@@ -157,7 +157,7 @@ All MCP data maps to UOP's existing 8 block types — no frontend changes needed
 
 ## 5. Case Study: FinOps Integration
 
-The FinOps team's Cline mode illustrates why UOP is the better distribution channel for any AI capability.
+The DevGPT Cline team's FinOps mode illustrates why UOP is the better distribution channel for any AI capability.
 
 ### Current: Cline + FinOps MCP
 
@@ -197,7 +197,7 @@ UOP does not replace Cline — it handles what Cline cannot:
 | Individual developer exploring one service | **Either** | Cline for local flow, UOP for richer analysis |
 | Tracking recommendation adoption | **UOP** | Centralized telemetry and Jira integration |
 
-### What the FinOps Team Needs to Do
+### What the DevGPT Cline Team Needs to Do
 
 1. **Make FinOps MCP server-deployable** — currently runs locally with Cline; needs HTTP/gRPC endpoint
 2. **Provide connection details** — endpoint URL, auth method, rate limits
@@ -1113,7 +1113,7 @@ UOP SmartSDK Agent tools:  [incidents, metrics, slos, graph, contacts,
 | **Phase 1: Mock Demo** | Add FinOps keyword handlers to existing mock data — demonstrates UX immediately | Days |
 | **Phase 2: Dual-Backend Config** | Add env-config vars, config exports, and auto-failover logic in AuraChatContext | Days |
 | **Phase 3: AURA Integration** | Connect to AURA's SmartSDK endpoint for real AI responses | Weeks |
-| **Phase 4: FinOps MCP** | Integrate FinOps MCP (via AURA or direct SmartSDK) for cost data | Weeks (depends on FinOps team) |
+| **Phase 4: FinOps MCP** | Integrate FinOps MCP (via AURA or direct SmartSDK) for cost data | Weeks (depends on DevGPT Cline team) |
 | **Phase 5: Developer MCPs** | Add Sourcegraph, Bitbucket, Jira MCPs for code remediation workflow | Weeks |
 | **Phase 6: Org-Wide Analytics** | Dashboard widgets for aggregate AI usage, recommendations, adoption rates | Weeks |
 
