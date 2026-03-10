@@ -451,7 +451,7 @@ def compute_executive_kpis(seal_list: list[str]) -> list[dict]:
     kpis = []
 
     # ── ADOPTION bucket ──────────────────────────────────────────────────────
-    dau = agg.get("adoption", {}).get("uop_chat_prompts", {})
+    dau = agg.get("adoption", {}).get("total_users_week", {})
     kpis.append({
         "label": "Total Users / Week", "section": "adoption", "bucket": "adoption",
         "current": dau.get("current", 0), "baseline": dau.get("baseline", 0),
@@ -499,6 +499,22 @@ def compute_executive_kpis(seal_list: list[str]) -> list[dict]:
         "current": impact.get("current", 0), "baseline": impact.get("baseline", 0),
         "pct_change": impact.get("pct_change", 0), "unit": "min",
         "spark": impact.get("trend", [])[-7:], "lower_is_better": True,
+    })
+
+    alert_rt = agg.get("results", {}).get("alert_response_time", {})
+    kpis.append({
+        "label": "Alert Response Time", "section": "results", "bucket": "results",
+        "current": alert_rt.get("current", 0), "baseline": alert_rt.get("baseline", 0),
+        "pct_change": alert_rt.get("pct_change", 0), "unit": "min",
+        "spark": alert_rt.get("trend", [])[-7:], "lower_is_better": True,
+    })
+
+    rt_type = agg.get("results", {}).get("response_time_by_type", {})
+    kpis.append({
+        "label": "Response Time by Type", "section": "results", "bucket": "results",
+        "current": rt_type.get("current", 0), "baseline": rt_type.get("baseline", 0),
+        "pct_change": rt_type.get("pct_change", 0), "unit": "min",
+        "spark": rt_type.get("trend", [])[-7:], "lower_is_better": True,
     })
 
     p1_all = agg.get("results", {}).get("p1_incidents", {})
