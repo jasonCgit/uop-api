@@ -73,7 +73,7 @@ def get_section_detail(
         "app_count": len(apps),
         "month_labels": MONTH_LABELS,
         "metrics": agg.get(section_key, {}),
-        "workstream_defs": WORKSTREAM_DEFS if section_key == "workstreams" else None,
+        "workstream_defs": WORKSTREAM_DEFS if section_key == "workstream_details" else None,
     }
 
 
