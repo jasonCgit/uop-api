@@ -43,10 +43,9 @@ MONTH_LABELS = [
 # ── Section definitions ──────────────────────────────────────────────────────
 
 SECTIONS = [
-    {"id": 1, "key": "adoption",           "label": "Adoption Details",         "short": "Adoption Details"},
-    {"id": 2, "key": "sre_coverage",       "label": "SRE Coverage Details",     "short": "SRE Coverage"},
-    {"id": 3, "key": "results",            "label": "Results Details",          "short": "Results Details"},
-    {"id": 4, "key": "workstream_details", "label": "Details by Workstream",    "short": "By Workstream"},
+    {"id": 1, "key": "adoption",     "label": "Adoption",     "short": "Adoption"},
+    {"id": 2, "key": "sre_coverage", "label": "SRE Coverage", "short": "SRE Coverage"},
+    {"id": 3, "key": "results",      "label": "Results",      "short": "Results"},
 ]
 
 WORKSTREAM_DEFS = [

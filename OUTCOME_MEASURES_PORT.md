@@ -9,12 +9,56 @@ Files and changes needed to add the Outcome Measures tab to a clean UOP deployme
 | uop-api | `app/mock_data/outcome_measures_data.py` | Mock data |
 | uop-api | `app/routers/outcome_measures.py` | API endpoints |
 | uop-ui | `src/pages/OutcomeMeasures.jsx` | Page component |
-| uop-ui | `src/components/outcome-measures/ExecutiveKpiBar.jsx` | Top-level KPI bar (Adoption, SRE Coverage, Results) |
-| uop-ui | `src/components/outcome-measures/ExecutiveSummary.jsx` | Making a Dent / Needs Focus / Workstream Effectiveness |
-| uop-ui | `src/components/outcome-measures/OutcomeTrendChart.jsx` | 12-month trend sparkline charts |
+| uop-ui | `src/components/outcome-measures/ExecutiveKpiBar.jsx` | AURA insights + 3 hero cards (Adoption, SRE Coverage, Results) with baseline toggle |
+| uop-ui | `src/components/outcome-measures/SectionTabs.jsx` | Tab bar for detail sections |
 | uop-ui | `src/components/outcome-measures/SectionKpiCards.jsx` | Section-specific KPI card grid |
+| uop-ui | `src/components/outcome-measures/OutcomeTrendChart.jsx` | 12-month trend line charts |
+
+## Page structure
+
+```
+AURA Outcome Insights (auto-generated verbal summary per bucket + recommendations)
+
+Executive Summary header + app count chip + baseline period toggle (3m/6m/12m/YTD)
+
+Hero KPI Bar (3 cards — Adoption / SRE Coverage / Results)
+  └── Each card: bucket subtitle (uppercase) + story title + KPI sub-cards
+  └── Each KPI: label, value+unit, % change badge, baseline, sparkline (2-col grid)
+
+Detail Metrics (collapsed by default, expand on click or tab select)
+  └── Section Tabs (Adoption | SRE Coverage | Results)
+  └── SectionKpiCards (detail metrics filtered from summary-only, same 2-col grid layout)
+  └── OutcomeTrendChart (12-month multi-metric line chart with toggle buttons)
+```
+
+## API endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/outcome-measures/summary` | Executive KPIs + section list + month labels |
+| GET | `/api/outcome-measures/section/{id}` | Section-specific aggregated metrics |
 
 ## Edits to existing files
+
+### uop-api — `app/routers/applications.py`
+
+Add filter params to `/api/applications/enriched` so top-nav filters propagate to sidebar tree:
+
+```python
+from fastapi import APIRouter, Query
+from app.services.enrichment import get_enriched_applications, _filter_dashboard_apps
+
+@router.get("/api/applications/enriched")
+def get_enriched(
+    lob: list[str] | None = Query(None), sub_lob: list[str] | None = Query(None, alias="subLob"),
+    cto: list[str] | None = Query(None), cbt: list[str] | None = Query(None),
+    seal: list[str] | None = Query(None), status: list[str] | None = Query(None),
+    search: str | None = Query(None),
+):
+    if any([lob, sub_lob, cto, cbt, seal, status, search]):
+        return _filter_dashboard_apps(lob, sub_lob, cto, cbt, seal, status, search)
+    return get_enriched_applications()
+```
 
 ### uop-api — `app/main.py`
 
@@ -78,8 +122,20 @@ Add entry to `FEATURES` array:
   color: '#8b5cf6',
   title: 'Outcome Measures',
   gif: 'outcome-measures.gif',
-  desc: 'SRE outcome metrics across 5 sections — 12-month trend charts, baseline comparisons, CTO/CBT leaderboards, and workstream tracking.',
+  desc: 'SRE outcome metrics across 3 sections — 12-month trend charts, baseline comparisons, and hero KPI cards.',
 },
+```
+
+## Filter architecture
+
+```
+TopNav SearchFilterPopover
+  → updates FilterContext (LOB, Sub-LOB, CTO, CBT, search)
+  → OutcomeMeasures page listens via useFilters()
+  → buildFilterQueryString() creates ?lob=AWM&...
+  → fetchApps(/api/applications/enriched?lob=AWM) returns filtered apps
+  → AppTreeSidebar receives filtered apps as prop (passive consumer)
+  → Tree selection further narrows via seal= params
 ```
 
 ## Full Metric Coverage
@@ -111,7 +167,7 @@ All metrics mapped to the Outcome Measures Plan spreadsheet.
 
 | # | Spreadsheet Name | Metric Key | Unit | View |
 |---|---|---|---|---|
-| 1 | Incidents avoided → Code Updates in DevGPT | `incidents_avoided` | count | Detail |
+| 1 | Incidents avoided -> Code Updates in DevGPT | `incidents_avoided` | count | Detail |
 | 2 | Incidents avoided — UAT | `incidents_avoided_uat` | count | Detail |
 | 3 | Incidents avoided — Prod | `incidents_avoided_prod` | count | Detail |
 | 4 | Anomalies detected per 100 changes | `anomaly_rate` | /100 chg | Summary |
@@ -129,7 +185,3 @@ All metrics mapped to the Outcome Measures Plan spreadsheet.
 | 16 | Cost Reduction by Workstream | `cost_reduction_zero_touch`, `cost_reduction_techsupport` | $ | Detail |
 | 17 | Alert Noise Reduction | `alert_noise_reduction` | count | Detail |
 | 18 | Suppression Rate | `suppression_rate` | % | Detail |
-
-### Workstream Details (8 workstreams)
-
-Golden Signal Monitoring, SLO Management, Incident Zero, Blast Radius Analysis, Zero-Touch M&O, SRE Telemetry, AURA AI Assistant, Knowledge Graph — each with adoption %, maturity, and value scores.

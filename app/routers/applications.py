@@ -1,8 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from app.schemas import AppTeamAssignment, IndicatorExclusion
 from app.services.enrichment import (
     get_enriched_applications,
+    _filter_dashboard_apps,
     APP_TEAM_ASSIGNMENTS,
     APP_EXCLUDED_INDICATORS,
     DEPLOYMENT_EXCLUDED_INDICATORS,
@@ -13,7 +14,14 @@ router = APIRouter()
 
 
 @router.get("/api/applications/enriched")
-def get_enriched():
+def get_enriched(
+    lob: list[str] | None = Query(None), sub_lob: list[str] | None = Query(None, alias="subLob"),
+    cto: list[str] | None = Query(None), cbt: list[str] | None = Query(None),
+    seal: list[str] | None = Query(None), status: list[str] | None = Query(None),
+    search: str | None = Query(None),
+):
+    if any([lob, sub_lob, cto, cbt, seal, status, search]):
+        return _filter_dashboard_apps(lob, sub_lob, cto, cbt, seal, status, search)
     return get_enriched_applications()
 
 
