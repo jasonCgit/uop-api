@@ -9,6 +9,10 @@ Files and changes needed to add the Outcome Measures tab to a clean UOP deployme
 | uop-api | `app/mock_data/outcome_measures_data.py` | Mock data |
 | uop-api | `app/routers/outcome_measures.py` | API endpoints |
 | uop-ui | `src/pages/OutcomeMeasures.jsx` | Page component |
+| uop-ui | `src/components/outcome-measures/ExecutiveKpiBar.jsx` | Top-level KPI bar (Adoption, SRE Coverage, Results) |
+| uop-ui | `src/components/outcome-measures/ExecutiveSummary.jsx` | Making a Dent / Needs Focus / Workstream Effectiveness |
+| uop-ui | `src/components/outcome-measures/OutcomeTrendChart.jsx` | 12-month trend sparkline charts |
+| uop-ui | `src/components/outcome-measures/SectionKpiCards.jsx` | Section-specific KPI card grid |
 
 ## Edits to existing files
 
