@@ -83,6 +83,8 @@ def _generate_seal_metrics(seal: str) -> dict:
     devgpt_exec_current = devgpt_exec_baseline + int(devgpt_exec_baseline * _pct(_seed(seal, "dgpt"), 30, 200) / 100)
     simulation_baseline = 3 + (s % 12)
     simulation_current = simulation_baseline + int(simulation_baseline * _pct(_seed(seal, "sim"), 20, 150) / 100)
+    total_users_baseline = 15 + (s % 50)
+    total_users_current = total_users_baseline + int(total_users_baseline * _pct(_seed(seal, "tuw"), 30, 160) / 100)
 
     # ── Section 2: SRE Coverage Details ──────────────────────────────────────
     sre_telemetry_cov_baseline = _pct(_seed(seal, "stcb"), 40, 75)
@@ -121,6 +123,22 @@ def _generate_seal_metrics(seal: str) -> dict:
     cost_ts_current = cost_ts_baseline + int(cost_ts_baseline * _pct(_seed(seal, "cts"), 10, 55) / 100)
     anomaly_rate_baseline = _pct(_seed(seal, "arb"), 5, 20)
     anomaly_rate_current = max(0.5, anomaly_rate_baseline - _pct(_seed(seal, "arc"), 1, 10))
+    change_aware_anomaly_baseline = _pct(_seed(seal, "carb"), 8, 25)
+    change_aware_anomaly_current = max(0.5, change_aware_anomaly_baseline - _pct(_seed(seal, "carc"), 2, 12))
+    incidents_avoided_uat_baseline = 0
+    incidents_avoided_uat_current = 1 + (s % 8)
+    incidents_avoided_prod_baseline = 0
+    incidents_avoided_prod_current = 1 + (s % 7)
+    alert_response_baseline = 8 + (s % 25)
+    alert_response_current = max(2, alert_response_baseline - int(alert_response_baseline * _pct(_seed(seal, "art2"), 15, 55) / 100))
+    response_type_baseline = 5 + (s % 20)
+    response_type_current = response_type_baseline + int(response_type_baseline * _pct(_seed(seal, "rtb"), 20, 120) / 100)
+    response_time_type_baseline = 12 + (s % 30)
+    response_time_type_current = max(3, response_time_type_baseline - int(response_time_type_baseline * _pct(_seed(seal, "rtt"), 15, 50) / 100))
+    pct_p1p2_alerts_baseline = _pct(_seed(seal, "pab"), 20, 55)
+    pct_p1p2_alerts_current = min(100.0, pct_p1p2_alerts_baseline + _pct(_seed(seal, "pac"), 5, 30))
+    actionable_alerts_baseline = 20 + (s % 80)
+    actionable_alerts_current = max(5, actionable_alerts_baseline - int(actionable_alerts_baseline * _pct(_seed(seal, "aar"), 10, 50) / 100))
     noise_baseline = 50 + (s % 200)
     noise_current = noise_baseline + int(noise_baseline * _pct(_seed(seal, "noise"), -30, 80) / 100)
     suppression_baseline = _pct(_seed(seal, "supb"), 5, 30)
@@ -147,6 +165,7 @@ def _generate_seal_metrics(seal: str) -> dict:
             "clicks_aura":          {"baseline": clicks_aura_baseline,    "current": clicks_aura_current,    "trend": _trend_12m(_seed(seal, "caurat"), clicks_aura_baseline,  clicks_aura_current),    "unit": "clicks/mo"},
             "devgpt_executions":    {"baseline": devgpt_exec_baseline,    "current": devgpt_exec_current,    "trend": _trend_12m(_seed(seal, "dgptt"), devgpt_exec_baseline,   devgpt_exec_current),    "unit": "exec/mo"},
             "simulation_executions":{"baseline": simulation_baseline,     "current": simulation_current,     "trend": _trend_12m(_seed(seal, "simt"), simulation_baseline,     simulation_current),     "unit": "runs/mo"},
+            "total_users_week":    {"baseline": total_users_baseline,    "current": total_users_current,    "trend": _trend_12m(_seed(seal, "tuwt"), total_users_baseline,    total_users_current),    "unit": "users/wk"},
         },
         "sre_coverage": {
             "sre_telemetry_coverage": {"baseline": sre_telemetry_cov_baseline, "current": sre_telemetry_cov_current, "trend": _trend_12m(_seed(seal, "stct"), sre_telemetry_cov_baseline, sre_telemetry_cov_current), "unit": "%", "lower_is_better": False},
@@ -156,6 +175,8 @@ def _generate_seal_metrics(seal: str) -> dict:
         },
         "results": {
             "incidents_avoided":       {"baseline": incidents_avoided_baseline, "current": incidents_avoided_current, "trend": _trend_12m(_seed(seal, "iat"), 0, incidents_avoided_current),              "unit": "count",    "lower_is_better": False},
+            "incidents_avoided_uat":   {"baseline": incidents_avoided_uat_baseline,  "current": incidents_avoided_uat_current,  "trend": _trend_12m(_seed(seal, "iaut"), 0, incidents_avoided_uat_current),  "unit": "count", "lower_is_better": False},
+            "incidents_avoided_prod":  {"baseline": incidents_avoided_prod_baseline, "current": incidents_avoided_prod_current, "trend": _trend_12m(_seed(seal, "iapt"), 0, incidents_avoided_prod_current), "unit": "count", "lower_is_better": False},
             "p1_incidents":            {"baseline": p1_baseline,                "current": p1_current,                "trend": _trend_12m(_seed(seal, "p1t"), p1_baseline, p1_current),                   "unit": "count",    "lower_is_better": True},
             "p2_incidents":            {"baseline": p2_baseline,                "current": p2_current,                "trend": _trend_12m(_seed(seal, "p2t"), p2_baseline, p2_current),                   "unit": "count",    "lower_is_better": True},
             "p3_incidents":            {"baseline": p3_baseline,                "current": p3_current,                "trend": _trend_12m(_seed(seal, "p3t"), p3_baseline, p3_current),                   "unit": "count",    "lower_is_better": True},
@@ -166,6 +187,12 @@ def _generate_seal_metrics(seal: str) -> dict:
             "mttr_p3":                 {"baseline": mttr_p3_baseline,           "current": mttr_p3_current,           "trend": _trend_12m(_seed(seal, "mp3t"), mttr_p3_baseline, mttr_p3_current),        "unit": "min",      "lower_is_better": True},
             "ai_impact_duration":      {"baseline": true_impact_baseline,       "current": true_impact_current,       "trend": _trend_12m(_seed(seal, "ttr"), true_impact_baseline, true_impact_current),  "unit": "min",      "lower_is_better": True},
             "anomaly_rate":            {"baseline": anomaly_rate_baseline,       "current": anomaly_rate_current,      "trend": _trend_12m(_seed(seal, "art"), anomaly_rate_baseline, anomaly_rate_current), "unit": "/100 chg", "lower_is_better": True},
+            "change_aware_anomaly_rate": {"baseline": change_aware_anomaly_baseline, "current": change_aware_anomaly_current, "trend": _trend_12m(_seed(seal, "cart"), change_aware_anomaly_baseline, change_aware_anomaly_current), "unit": "/100 chg", "lower_is_better": True},
+            "alert_response_time":     {"baseline": alert_response_baseline,   "current": alert_response_current,   "trend": _trend_12m(_seed(seal, "art2t"), alert_response_baseline, alert_response_current), "unit": "min", "lower_is_better": True},
+            "response_type_breakdown": {"baseline": response_type_baseline,    "current": response_type_current,    "trend": _trend_12m(_seed(seal, "rtbt"), response_type_baseline, response_type_current),   "unit": "count", "lower_is_better": False},
+            "response_time_by_type":   {"baseline": response_time_type_baseline, "current": response_time_type_current, "trend": _trend_12m(_seed(seal, "rttt"), response_time_type_baseline, response_time_type_current), "unit": "min", "lower_is_better": True},
+            "pct_p1p2_detected_by_alerts": {"baseline": pct_p1p2_alerts_baseline, "current": pct_p1p2_alerts_current, "trend": _trend_12m(_seed(seal, "pat"), pct_p1p2_alerts_baseline, pct_p1p2_alerts_current), "unit": "%", "lower_is_better": False},
+            "actionable_alerts_reduction": {"baseline": actionable_alerts_baseline, "current": actionable_alerts_current, "trend": _trend_12m(_seed(seal, "aart"), actionable_alerts_baseline, actionable_alerts_current), "unit": "count", "lower_is_better": True},
             "cost_reduction_zero_touch":   {"baseline": cost_zt_baseline,       "current": cost_zt_current,           "trend": _trend_12m(_seed(seal, "cztt"), cost_zt_baseline, cost_zt_current),         "unit": "$",        "lower_is_better": False},
             "cost_reduction_techsupport":  {"baseline": cost_ts_baseline,       "current": cost_ts_current,           "trend": _trend_12m(_seed(seal, "ctst"), cost_ts_baseline, cost_ts_current),         "unit": "$",        "lower_is_better": False},
             "alert_noise_reduction":   {"baseline": noise_baseline,             "current": noise_current,             "trend": _trend_12m(_seed(seal, "ntr"), noise_baseline, noise_current),               "unit": "count",    "lower_is_better": True},
@@ -247,6 +274,7 @@ def aggregate_metrics(seal_list: list[str], section_key: str | None = None) -> d
     # Section 1: Adoption
     if section_key is None or section_key == "adoption":
         adoption_metric_keys = [
+            ("total_users_week",       "sum",  False, "users/wk"),
             ("mcp_requests",          "sum",  False, "req/mo"),
             ("uop_chat_prompts",       "sum",  False, "prompts/mo"),
             ("clicks_blast_radius",    "sum",  False, "clicks/mo"),
@@ -283,6 +311,8 @@ def aggregate_metrics(seal_list: list[str], section_key: str | None = None) -> d
     if section_key is None or section_key == "results":
         results_metric_defs = [
             ("incidents_avoided",          "sum",  False, "count"),
+            ("incidents_avoided_uat",      "sum",  False, "count"),
+            ("incidents_avoided_prod",     "sum",  False, "count"),
             ("p1_incidents",               "sum",  True,  "count"),
             ("p2_incidents",               "sum",  True,  "count"),
             ("p3_incidents",               "sum",  True,  "count"),
@@ -292,7 +322,13 @@ def aggregate_metrics(seal_list: list[str], section_key: str | None = None) -> d
             ("mttr_p2",                    "avg",  True,  "min"),
             ("mttr_p3",                    "avg",  True,  "min"),
             ("ai_impact_duration",         "avg",  True,  "min"),
+            ("alert_response_time",        "avg",  True,  "min"),
+            ("response_type_breakdown",    "sum",  False, "count"),
+            ("response_time_by_type",      "avg",  True,  "min"),
             ("anomaly_rate",               "avg",  True,  "/100 chg"),
+            ("change_aware_anomaly_rate",  "avg",  True,  "/100 chg"),
+            ("pct_p1p2_detected_by_alerts","avg",  False, "%"),
+            ("actionable_alerts_reduction","sum",  True,  "count"),
             ("cost_reduction_zero_touch",  "sum",  False, "$"),
             ("cost_reduction_techsupport", "sum",  False, "$"),
             ("alert_noise_reduction",      "sum",  True,  "count"),
