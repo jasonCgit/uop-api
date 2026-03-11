@@ -190,3 +190,40 @@ class SystemOverrideUpdate(BaseModel):
     impacted_capabilities: Optional[list[str]] = None
     sre_lead_overrides: Optional[list[str]] = None
     next_update: Optional[str] = None
+
+
+# ── Customer Journeys ─────────────────────────────────────────────────────────
+
+class JourneyComponentMapping(BaseModel):
+    seal: str
+    app_name: str = ""
+    deployment: str = ""
+    component_id: str = ""
+    component_label: str = ""
+
+
+class JourneyStepCreate(BaseModel):
+    name: str
+    description: str = ""
+    mapped_components: list[JourneyComponentMapping] = []
+    mapped_es_ids: list[str] = []
+
+
+class JourneyCreate(BaseModel):
+    name: str
+    description: str = ""
+    owner_lob: str = ""
+    owner_team: str = ""
+    criticality: str = "medium"
+    customer_segment: str = ""
+    steps: list[JourneyStepCreate] = []
+
+
+class JourneyUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    owner_lob: Optional[str] = None
+    owner_team: Optional[str] = None
+    criticality: Optional[str] = None
+    customer_segment: Optional[str] = None
+    steps: Optional[list[JourneyStepCreate]] = None

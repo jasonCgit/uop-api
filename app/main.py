@@ -18,6 +18,7 @@ from app.routers import (
     outcome_measures,
     essential_services,
     situation_room,
+    customer_journeys,
 )
 from app.services.vc_monitor import start_vc_notification_loop
 
@@ -47,6 +48,7 @@ app.include_router(directory.router)
 app.include_router(outcome_measures.router)
 app.include_router(essential_services.router)
 app.include_router(situation_room.router)
+app.include_router(customer_journeys.router)
 
 
 @app.on_event("startup")
