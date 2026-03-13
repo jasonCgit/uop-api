@@ -72,6 +72,7 @@ def get_layer_seals():
             ("102987", "AWM Entitlements (WEAVE)"),
             ("90215", "Spectrum Portfolio Mgmt"),
             ("62100", "Real-Time Payments Gateway"),
+            ("77777", "Digital Channels Platform"),
         ]
     ]
 

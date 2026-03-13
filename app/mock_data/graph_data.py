@@ -132,6 +132,23 @@ NODES = [
     {"id": "rtpg-recon-svc",      "label": "RTPG-RECONCILIATION",         "status": "healthy",  "team": "Payments Core",     "sla": "99.5%",  "incidents_30d": 1},
     {"id": "rtpg-archive-svc",    "label": "RTPG-DATA-ARCHIVAL",          "status": "healthy",  "team": "Payments Core",     "sla": "99.0%",  "incidents_30d": 0},
     {"id": "rtpg-monitor-svc",    "label": "RTPG-HEALTH-MONITOR",         "status": "warning",  "team": "Payments Core",     "sla": "99.9%",  "incidents_30d": 2},
+
+    # DIGITAL CHANNELS PLATFORM cluster (77777) - Sparse graph (14 nodes, mostly disconnected)
+    # Simulates live data where dependency edges are not yet mapped
+    {"id": "dcp-web-portal",       "label": "DCP-WEB-PORTAL",              "status": "healthy",  "team": "Digital Channels",  "sla": "99.9%",  "incidents_30d": 0},
+    {"id": "dcp-api-gateway",      "label": "DCP-API-GATEWAY",             "status": "warning",  "team": "Digital Channels",  "sla": "99.99%", "incidents_30d": 2},
+    {"id": "dcp-auth-svc",         "label": "DCP-AUTH-SERVICE",            "status": "healthy",  "team": "Digital Channels",  "sla": "99.99%", "incidents_30d": 0},
+    {"id": "dcp-content-svc",      "label": "DCP-CONTENT-SERVICE",         "status": "healthy",  "team": "Digital Channels",  "sla": "99.5%",  "incidents_30d": 1},
+    {"id": "dcp-search-svc",       "label": "DCP-SEARCH-SERVICE",          "status": "healthy",  "team": "Digital Channels",  "sla": "99.0%",  "incidents_30d": 0},
+    {"id": "dcp-notification-svc", "label": "DCP-NOTIFICATION-SERVICE",    "status": "warning",  "team": "Digital Channels",  "sla": "99.5%",  "incidents_30d": 3},
+    {"id": "dcp-analytics-svc",    "label": "DCP-ANALYTICS-ENGINE",        "status": "healthy",  "team": "Digital Channels",  "sla": "99.0%",  "incidents_30d": 0},
+    {"id": "dcp-media-svc",        "label": "DCP-MEDIA-SERVICE",           "status": "healthy",  "team": "Digital Channels",  "sla": "99.0%",  "incidents_30d": 0},
+    {"id": "dcp-config-svc",       "label": "DCP-CONFIG-SERVICE",          "status": "healthy",  "team": "Digital Channels",  "sla": "99.0%",  "incidents_30d": 0},
+    {"id": "dcp-cache-svc",        "label": "DCP-CACHE-SERVICE",           "status": "healthy",  "team": "Digital Channels",  "sla": "99.9%",  "incidents_30d": 0},
+    {"id": "dcp-session-svc",      "label": "DCP-SESSION-SERVICE",         "status": "healthy",  "team": "Digital Channels",  "sla": "99.9%",  "incidents_30d": 0},
+    {"id": "dcp-preference-svc",   "label": "DCP-PREFERENCE-SERVICE",      "status": "healthy",  "team": "Digital Channels",  "sla": "99.0%",  "incidents_30d": 0},
+    {"id": "dcp-audit-svc",        "label": "DCP-AUDIT-SERVICE",           "status": "healthy",  "team": "Digital Channels",  "sla": "99.0%",  "incidents_30d": 0},
+    {"id": "dcp-mobile-bff",       "label": "DCP-MOBILE-BFF",              "status": "critical", "team": "Digital Channels",  "sla": "99.9%",  "incidents_30d": 4},
 ]
 
 # ── Health Indicator Types ────────────────────────────────────────────────────
@@ -203,6 +220,9 @@ COMPONENT_INDICATOR_MAP = {
     "weave-audit-svc": "Process Group", "weave-report-svc": "Service",
     "quantum-report-svc": "Service", "rtpg-notif-svc": "Service",
     "rtpg-audit-svc": "Process Group", "rtpg-monitor-svc": "Process Group",
+    # Digital Channels Platform
+    "dcp-web-portal": "Synthetic", "dcp-api-gateway": "Service",
+    "dcp-auth-svc": "Service", "dcp-mobile-bff": "Service",
 }
 
 
@@ -424,6 +444,10 @@ EDGES_RAW = [
     ("rtpg-recon-svc",       "rtpg-archive-svc"),
     ("rtpg-ledger-svc",      "rtpg-audit-svc"),
     ("rtpg-monitor-svc",     "rtpg-audit-svc"),
+
+    # Digital Channels Platform (77777) — sparse: only 2 edges, 11 orphan nodes
+    ("dcp-web-portal",       "dcp-api-gateway"),
+    ("dcp-api-gateway",      "dcp-auth-svc"),
 ]
 
 # ── Blast Radius Layers - mock data ──────────────────────────────────────────
@@ -481,6 +505,13 @@ SEAL_COMPONENTS = {
         "rtpg-sanctions-svc", "rtpg-aml-svc", "rtpg-fx-converter", "rtpg-clearing-svc",
         "rtpg-settlement-svc", "rtpg-ledger-svc", "rtpg-notif-svc", "rtpg-audit-svc",
         "rtpg-recon-svc", "rtpg-archive-svc", "rtpg-monitor-svc",
+    ],
+    # Sparse graph — 14 components, only 3 connected (simulates partial live data)
+    "77777": [
+        "dcp-web-portal", "dcp-api-gateway", "dcp-auth-svc", "dcp-content-svc",
+        "dcp-search-svc", "dcp-notification-svc", "dcp-analytics-svc", "dcp-media-svc",
+        "dcp-config-svc", "dcp-cache-svc", "dcp-session-svc", "dcp-preference-svc",
+        "dcp-audit-svc", "dcp-mobile-bff",
     ],
 }
 
@@ -628,6 +659,27 @@ INDICATOR_NODES = [
     {"id": "dt-svc-rtpg-recon",       "label": "ReconciliationSvc",      "indicator_type": "Service",       "health": "green", "component": "rtpg-recon-svc"},
     {"id": "dt-pg-rtpg-archive",      "label": "rtpg-archive",           "indicator_type": "Process Group", "health": "green", "component": "rtpg-archive-svc"},
     {"id": "dt-svc-rtpg-monitor",     "label": "HealthMonitorSvc",       "indicator_type": "Service",       "health": "amber", "component": "rtpg-monitor-svc"},
+
+    # ── Digital Channels Platform (77777) — includes high-indicator-count component ──
+    {"id": "dt-syn-dcp-portal",       "label": "Portal Health",          "indicator_type": "Synthetic",     "health": "green", "component": "dcp-web-portal"},
+    {"id": "dt-pg-dcp-portal",        "label": "dcp-web-portal",         "indicator_type": "Process Group", "health": "green", "component": "dcp-web-portal"},
+    # dcp-api-gateway: 12 indicators — simulates a heavily-monitored component
+    {"id": "dt-pg-dcp-gw",            "label": "dcp-api-gateway",        "indicator_type": "Process Group", "health": "amber", "component": "dcp-api-gateway"},
+    {"id": "dt-svc-dcp-gw",           "label": "APIGatewaySvc",          "indicator_type": "Service",       "health": "amber", "component": "dcp-api-gateway"},
+    {"id": "dt-syn-dcp-gw-login",     "label": "Login Flow",             "indicator_type": "Synthetic",     "health": "green", "component": "dcp-api-gateway"},
+    {"id": "dt-syn-dcp-gw-checkout",  "label": "Checkout Flow",          "indicator_type": "Synthetic",     "health": "red",   "component": "dcp-api-gateway"},
+    {"id": "dt-syn-dcp-gw-search",    "label": "Search Flow",            "indicator_type": "Synthetic",     "health": "green", "component": "dcp-api-gateway"},
+    {"id": "dt-syn-dcp-gw-transfer",  "label": "Transfer Flow",          "indicator_type": "Synthetic",     "health": "amber", "component": "dcp-api-gateway"},
+    {"id": "dt-syn-dcp-gw-dashboard", "label": "Dashboard Load",         "indicator_type": "Synthetic",     "health": "green", "component": "dcp-api-gateway"},
+    {"id": "dt-syn-dcp-gw-profile",   "label": "Profile Update",         "indicator_type": "Synthetic",     "health": "green", "component": "dcp-api-gateway"},
+    {"id": "dt-syn-dcp-gw-alerts",    "label": "Alert Delivery",         "indicator_type": "Synthetic",     "health": "amber", "component": "dcp-api-gateway"},
+    {"id": "dt-syn-dcp-gw-export",    "label": "Data Export",            "indicator_type": "Synthetic",     "health": "green", "component": "dcp-api-gateway"},
+    {"id": "dt-syn-dcp-gw-onboard",   "label": "Onboarding Flow",        "indicator_type": "Synthetic",     "health": "green", "component": "dcp-api-gateway"},
+    {"id": "dt-syn-dcp-gw-mfa",       "label": "MFA Verification",       "indicator_type": "Synthetic",     "health": "red",   "component": "dcp-api-gateway"},
+    {"id": "dt-svc-dcp-auth",         "label": "AuthService",            "indicator_type": "Service",       "health": "green", "component": "dcp-auth-svc"},
+    {"id": "dt-svc-dcp-mobile",       "label": "MobileBFFSvc",           "indicator_type": "Service",       "health": "red",   "component": "dcp-mobile-bff"},
+    {"id": "dt-pg-dcp-mobile",        "label": "dcp-mobile-bff",         "indicator_type": "Process Group", "health": "red",   "component": "dcp-mobile-bff"},
+    {"id": "dt-syn-dcp-mobile",       "label": "Mobile App Flow",        "indicator_type": "Synthetic",     "health": "red",   "component": "dcp-mobile-bff"},
 ]
 
 PLATFORM_NODES = [
@@ -784,7 +836,7 @@ SEAL_LABELS = {
     "90176": "Advisor Connect", "81884": "Order Decision Engine",
     "91001": "Quantum", "45440": "Credit Card Processing Engine",
     "102987": "AWM Entitlements (WEAVE)", "90215": "Spectrum Portfolio Mgmt",
-    "62100": "Real-Time Payments Gateway",
+    "62100": "Real-Time Payments Gateway", "77777": "Digital Channels Platform",
 }
 
 # Component-to-component edges that communicate in both directions

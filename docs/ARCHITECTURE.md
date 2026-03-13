@@ -309,11 +309,24 @@ The knowledge graph represents application dependencies across five layers:
 | Component → Indicator | Monitored by | Always uni |
 | Component → External Component | Cross-SEAL dependency | `upstream` / `downstream` / `both` |
 
-### 5.4 SEAL-to-Component Mapping
+### 5.4 Layout Strategy for Disconnected Components
+
+When live data has many components with no inter-component dependency edges, the dagre layout algorithm stacks them all in a single vertical column. Both `DependencyFlow` and `LayeredDependencyFlow` handle this by partitioning nodes:
+
+- **Connected nodes** (at least one edge): laid out by dagre with `rankdir: 'LR'`
+- **Orphan nodes** (zero edges): arranged in a compact grid (4 columns) to the right of the dagre subgraph
+
+The shared utility `src/utils/gridLayoutOrphans.js` provides:
+- `partitionByConnectivity(nodeIds, edges)` — degree-based split into connected vs orphan sets
+- `gridLayoutOrphans(orphanIds, connectedBounds, opts)` — grid positioning relative to dagre bounding box
+
+In `LayeredDependencyFlow`, grid-positioned orphans feed into `compPos`, so Phase 2 sub-layers (platform, datacenter, indicators) align correctly beneath their orphan parents.
+
+### 5.5 SEAL-to-Component Mapping
 
 Each application (SEAL) maps to a set of components. Currently 10 SEALs have knowledge graph data (see [Appendix A](#appendix-a-application-seal-reference) for the full list with LOB and component counts). 71 additional apps in the registry have no graph data.
 
-### 5.5 Application → Deployment → Component Relationship
+### 5.6 Application → Deployment → Component Relationship
 
 ```
 Application (SEAL: 88180 = "Connect OS")
